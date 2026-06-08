@@ -78,6 +78,30 @@ const SelectBase = ({ route }) => {
   });
   const [updateindex, setUpdateindex] = useState(null);
   const image = '../images/UI/Asset35.png';
+
+  const getBaseOption = (item, index) => {
+    const rawName = typeof item?.nameser === 'string' ? item.nameser.trim() : '';
+    const rawUrl = typeof item?.urlser === 'string' ? item.urlser.trim() : '';
+    const fallbackName = rawUrl
+      ? rawUrl
+          .replace(/^https?:\/\//i, '')
+          .split('/')[0]
+      : `${Language.t('selectBase.lebel')} ${index + 1}`;
+    const value = rawName || rawUrl || String(index);
+
+    return {
+      item,
+      index,
+      label: rawName || fallbackName,
+      value,
+      nameser: rawName,
+      urlser: rawUrl,
+    };
+  };
+
+  const baseOptions = (Array.isArray(items) ? items : []).map((item, index) =>
+    getBaseOption(item, index),
+  );
   const setlanguageState = itemValue => {
     dispatch(loginActions.setLanguage(itemValue));
     console.log(itemValue);
@@ -111,9 +135,10 @@ const SelectBase = ({ route }) => {
       return;
     }
 
-    const hasSelectedBase = nextItems.some(
-      item => item?.nameser === selectbaseValue,
-    );
+    const hasSelectedBase = nextItems.some((item, index) => {
+      const option = getBaseOption(item, index);
+      return option.value === selectbaseValue;
+    });
 
     if (!hasSelectedBase && databaseReducer.Data.nameser) {
       _onPressSelectbaseValue(databaseReducer.Data.nameser);
@@ -124,6 +149,30 @@ const SelectBase = ({ route }) => {
     if (route.params?.post) {
       setBasename(route.params.post.value);
       setBsaeurl(route.params.post.label);
+
+      const scannedUsername =
+        route.params.post.username ||
+        route.params.post.usernameser ||
+        route.params.credentials?.username ||
+        '';
+      const scannedPassword =
+        route.params.post.password ||
+        route.params.post.passwordser ||
+        route.params.credentials?.password ||
+        '';
+
+      if (scannedUsername || scannedPassword) {
+        console.log('[SelectBase] scannedCredentials =', {
+          username: scannedUsername,
+          password: scannedPassword,
+        });
+        setUsername(scannedUsername);
+        setPassword(scannedPassword);
+      }
+
+      if (route.params.qrDebug) {
+        console.log('[SelectBase] qrDebug =', route.params.qrDebug);
+      }
     }
   }, [route.params?.post]);
 
@@ -142,7 +191,8 @@ const SelectBase = ({ route }) => {
     setSelectbaseValue(itemValue);
     if (itemValue != '-1') {
       for (let i in items) {
-        if (items[i].nameser == itemValue) {
+        const option = getBaseOption(items[i], Number(i));
+        if (option.value == itemValue) {
           setBasename(items[i].nameser);
           setBsaeurl(items[i].urlser);
           setUsername(items[i].usernameser);
@@ -617,19 +667,23 @@ const SelectBase = ({ route }) => {
                       enabled={true}
                       mode="dropdown"
                       style={{
+                        flex: 1,
+                        minWidth: 220,
                         color: Colors.buttonColorPrimary,
                         backgroundColor: Colors.backgroundColorSecondary,
                       }}
+                      dropdownIconColor={Colors.buttonColorPrimary}
                       onValueChange={(itemValue, itemIndex) =>
                         _onPressSelectbaseValue(itemValue)
                       }
                     >
-                      {items.map((obj, index) => {
+                      {baseOptions.map(option => {
                         return (
                           <Picker.Item
-                            label={obj.nameser}
+                            key={option.value}
+                            label={option.label}
                             color={Colors.buttonColorPrimary}
-                            value={obj.nameser}
+                            value={option.value}
                           />
                         );
                       })}
@@ -648,6 +702,8 @@ const SelectBase = ({ route }) => {
                         color: Colors.buttonColorPrimary,
                         backgroundColor: Colors.borderColor,
                       }}
+                      style={{ flex: 1, minWidth: 220 }}
+                      dropdownIconColor={Colors.buttonColorPrimary}
                       onValueChange={(itemValue, itemIndex) =>
                         _onPressSelectbaseValue(itemValue)
                       }
