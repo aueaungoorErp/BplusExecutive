@@ -131,9 +131,21 @@ const OrderScreen = () => {
                 'BPAPUS-FETCH': '20',
             }),
         })
-            .then((response) => response.json())
+            .then(async (response) => {
+                const rawResponse = await response.text();
+
+                try {
+                    return JSON.parse(rawResponse);
+                } catch (error) {
+                    const preview = rawResponse ? rawResponse.trim().slice(0, 200) : '';
+                    throw new Error(`Invalid JSON response${preview ? `: ${preview}` : ''}`);
+                }
+            })
             .then((json) => {
-                let responseData = JSON.parse(json.ResponseData);
+                let responseData = typeof json.ResponseData === 'string'
+                    ? JSON.parse(json.ResponseData)
+                    : json.ResponseData;
+
                 if (responseData.RECORD_COUNT > 0) {
                     console.log(responseData.SearchGoodsInfoWPurcPrice)
                     setArrayObj(responseData.SearchGoodsInfoWPurcPrice)
@@ -220,9 +232,11 @@ const OrderScreen = () => {
                                         borderBottomStartRadius: 20, borderBottomEndRadius: 20,
                                         backgroundColor: Colors.backgroundLoginColorSecondary,
                                     }}>
-                                        {arrayObj.map((item) => {
+                                        {arrayObj.map((item, index) => {
                                             return (
-                                                <TouchableNativeFeedback onPress={() => navigation.navigate('OrderInformation',
+                                                <TouchableNativeFeedback
+                                                    key={`${item.GOODS_CODE ?? item.SKU_CODE ?? index}`}
+                                                    onPress={() => navigation.navigate('OrderInformation',
                                                     {
                                                         header: 'สอบถามข้อมูลการสั่งซื้อ',
                                                         data: item

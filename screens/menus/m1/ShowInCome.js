@@ -272,27 +272,27 @@ const ShowInCome = ({ route }) => {
                                     <KeyboardAvoidingView keyboardVerticalOffset={1} >
                                         <TouchableNativeFeedback >
                                             <View >
-                                                {arrayObj.map((item) => {
+                                                {arrayObj.map((item, index) => {
                                                     return (
-                                                        <>
-                                                            <View style={tableStyles.tableCell}>
-                                                                <View width={deviceWidth * 0.2} style={tableStyles.tableCellTitle}><Text style={{
-                                                                    fontSize: FontSize.medium,
-                                                                    color: Colors.fontColor,
-                                                                    alignSelf: 'flex-start'
-                                                                }} >{item.year}</Text></View>
-                                                                <View width={deviceWidth * 0.4} style={tableStyles.tableCellTitle}><Text style={{
-                                                                    fontSize: FontSize.medium,
-                                                                    color: Colors.fontColor,
-                                                                    alignSelf: 'flex-start'
-                                                                }} >{safe_Format.monthFormat(item.month)}</Text></View>
-                                                                <View width={deviceWidth * 0.4} style={tableStyles.tableCellTitle}><Text style={{
-                                                                    fontSize: FontSize.medium,
-                                                                    color: Colors.fontColor,
-                                                                    alignSelf: 'flex-end'
-                                                                }} >{safe_Format.currencyFormat(item.sellAmount)}</Text></View>
-                                                            </View>
-                                                        </>
+                                                        <View
+                                                            key={`${item.id ?? index}-${item.year}-${item.month}`}
+                                                            style={tableStyles.tableCell}>
+                                                            <View width={deviceWidth * 0.2} style={tableStyles.tableCellTitle}><Text style={{
+                                                                fontSize: FontSize.medium,
+                                                                color: Colors.fontColor,
+                                                                alignSelf: 'flex-start'
+                                                            }} >{item.year}</Text></View>
+                                                            <View width={deviceWidth * 0.4} style={tableStyles.tableCellTitle}><Text style={{
+                                                                fontSize: FontSize.medium,
+                                                                color: Colors.fontColor,
+                                                                alignSelf: 'flex-start'
+                                                            }} >{safe_Format.monthFormat(item.month)}</Text></View>
+                                                            <View width={deviceWidth * 0.4} style={tableStyles.tableCellTitle}><Text style={{
+                                                                fontSize: FontSize.medium,
+                                                                color: Colors.fontColor,
+                                                                alignSelf: 'flex-end'
+                                                            }} >{safe_Format.currencyFormat(item.sellAmount)}</Text></View>
+                                                        </View>
                                                     )
                                                 })}
 

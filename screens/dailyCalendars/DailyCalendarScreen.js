@@ -123,21 +123,30 @@ const DailyCalendarScreen = () => {
   useEffect(() => {
     refreshScreen();
   }, [poppoint || mappoint || rarchqDue || rapDue || Statedaily]);
+  const formatCalendarDate = rawDay => {
+    const dayNum = Number(rawDay);
+    const monthNum = monthIndex + 1;
+    const yearNum = yearIndex - 543;
+
+    if (!Number.isFinite(dayNum) || dayNum <= 0) {
+      return '';
+    }
+
+    return `${yearNum}${String(monthNum).padStart(2, '0')}${String(dayNum).padStart(2, '0')}`;
+  };
+
+  const getMonthDays = () =>
+    (safe_Format.Day_mont(yearIndex, monthIndex) || []).filter(day => {
+      const dayNum = Number(day);
+      return Number.isFinite(dayNum) && dayNum > 0;
+    });
+
   const fulldate = () => {
-    let d = dateIndex;
-    let m = monthIndex + 1;
-    let y = yearIndex - 543;
-    return `${y}${m.toString().length > 1 ? m : '0' + m}${
-      d.toString().length > 1 ? d : '0' + d
-    }`;
+    return formatCalendarDate(dateIndex);
   };
 
   const fetchdate = d => {
-    let m = monthIndex + 1;
-    let y = yearIndex - 543;
-    return `${y}${m.toString().length > 1 ? m : '0' + m}${
-      d.toString().length > 1 ? d : '0' + d
-    }`;
+    return formatCalendarDate(d);
   };
 
   const regisMacAdd = async () => {
@@ -320,30 +329,27 @@ const DailyCalendarScreen = () => {
   const getDay_Calendar = () => {
     var Day_Calendar = [];
     var safe_Day_Calendar = safe_Format.Day_Calendar(yearIndex, monthIndex);
-    let d = dateIndex;
-    let m = monthIndex + 1;
-    let y = yearIndex - 543;
     for (var i in safe_Day_Calendar) {
       for (var j in safe_Day_Calendar[i]) {
-        var temp_Day_Calendar = `${y}${m.toString().length > 1 ? m : '0' + m}${
-          safe_Day_Calendar[i][j].toString().length > 1
-            ? safe_Day_Calendar[i][j]
-            : '0' + safe_Day_Calendar[i][j]
-        }`;
+        var temp_Day_Calendar = formatCalendarDate(safe_Day_Calendar[i][j]);
         if (
-          (poppoint.SHOWCALENDARPOAPPOINT &&
+          (temp_Day_Calendar &&
+            poppoint.SHOWCALENDARPOAPPOINT &&
             poppoint.SHOWCALENDARPOAPPOINT.filter(item => {
               return item.TRH_SHIP_DATE == temp_Day_Calendar;
             }).length > 0) ||
-          (mappoint.SHOWCALENDARBKAPPOINT &&
+          (temp_Day_Calendar &&
+            mappoint.SHOWCALENDARBKAPPOINT &&
             mappoint.SHOWCALENDARBKAPPOINT.filter(item => {
               return item.TRH_SHIP_DATE == temp_Day_Calendar;
             }).length > 0) ||
-          (rarchqDue.SHOWCALENDARARDUE &&
+          (temp_Day_Calendar &&
+            rarchqDue.SHOWCALENDARARDUE &&
             rarchqDue.SHOWCALENDARARDUE.filter(item => {
               return item.ARD_DUE_DA == temp_Day_Calendar;
             }).length > 0) ||
-          (rapDue.SHOWCALENDARAPDUE &&
+          (temp_Day_Calendar &&
+            rapDue.SHOWCALENDARAPDUE &&
             rapDue.SHOWCALENDARAPDUE.filter(item => {
               return item.APD_DUE_DA == temp_Day_Calendar;
             }).length > 0)
@@ -375,6 +381,12 @@ const DailyCalendarScreen = () => {
   };
 
   const get_poppoint = async tempGuid => {
+    const monthDays = getMonthDays();
+    if (monthDays.length === 0) {
+      set_poppoint([]);
+      return;
+    }
+
     await fetch(databaseReducer.Data.urlser + '/Calendar', {
       method: 'POST',
       body: JSON.stringify({
@@ -383,13 +395,9 @@ const DailyCalendarScreen = () => {
         'BPAPUS-FUNCTION': 'SHOWCALENDARPOAPPOINT',
         'BPAPUS-PARAM':
           '{"FROM_DATE": ' +
-          fetchdate(safe_Format.Day_mont(yearIndex, monthIndex)[0]) +
+          fetchdate(monthDays[0]) +
           ',"TO_DATE": ' +
-          fetchdate(
-            safe_Format.Day_mont(yearIndex, monthIndex)[
-              safe_Format.Day_mont(yearIndex, monthIndex).length - 1
-            ],
-          ) +
+          fetchdate(monthDays[monthDays.length - 1]) +
           '}',
         'BPAPUS-FILTER': '',
         'BPAPUS-ORDERBY': '',
@@ -425,6 +433,12 @@ const DailyCalendarScreen = () => {
       });
   };
   const get_mappoint = async tempGuid => {
+    const monthDays = getMonthDays();
+    if (monthDays.length === 0) {
+      set_mappoint([]);
+      return;
+    }
+
     await fetch(databaseReducer.Data.urlser + '/Calendar', {
       method: 'POST',
       body: JSON.stringify({
@@ -433,13 +447,9 @@ const DailyCalendarScreen = () => {
         'BPAPUS-FUNCTION': 'SHOWCALENDARBKAPPOINT',
         'BPAPUS-PARAM':
           '{"FROM_DATE": ' +
-          fetchdate(safe_Format.Day_mont(yearIndex, monthIndex)[0]) +
+          fetchdate(monthDays[0]) +
           ',"TO_DATE": ' +
-          fetchdate(
-            safe_Format.Day_mont(yearIndex, monthIndex)[
-              safe_Format.Day_mont(yearIndex, monthIndex).length - 1
-            ],
-          ) +
+          fetchdate(monthDays[monthDays.length - 1]) +
           '}',
         'BPAPUS-FILTER': '',
         'BPAPUS-ORDERBY': '',
@@ -459,6 +469,12 @@ const DailyCalendarScreen = () => {
       });
   };
   const get_rarchqDue = async tempGuid => {
+    const monthDays = getMonthDays();
+    if (monthDays.length === 0) {
+      set_rarchqDue([]);
+      return;
+    }
+
     await fetch(databaseReducer.Data.urlser + '/Calendar', {
       method: 'POST',
       body: JSON.stringify({
@@ -467,13 +483,9 @@ const DailyCalendarScreen = () => {
         'BPAPUS-FUNCTION': 'SHOWCALENDARARDUE',
         'BPAPUS-PARAM':
           '{"FROM_DATE": ' +
-          fetchdate(safe_Format.Day_mont(yearIndex, monthIndex)[0]) +
+          fetchdate(monthDays[0]) +
           ',"TO_DATE": ' +
-          fetchdate(
-            safe_Format.Day_mont(yearIndex, monthIndex)[
-              safe_Format.Day_mont(yearIndex, monthIndex).length - 1
-            ],
-          ) +
+          fetchdate(monthDays[monthDays.length - 1]) +
           '}',
         'BPAPUS-FILTER': '',
         'BPAPUS-ORDERBY': '',
@@ -493,6 +505,12 @@ const DailyCalendarScreen = () => {
       });
   };
   const get_rapDue = async tempGuid => {
+    const monthDays = getMonthDays();
+    if (monthDays.length === 0) {
+      set_rapDue([]);
+      return;
+    }
+
     await fetch(databaseReducer.Data.urlser + '/Calendar', {
       method: 'POST',
       body: JSON.stringify({
@@ -501,13 +519,9 @@ const DailyCalendarScreen = () => {
         'BPAPUS-FUNCTION': 'SHOWCALENDARAPDUE',
         'BPAPUS-PARAM':
           '{"FROM_DATE": ' +
-          fetchdate(safe_Format.Day_mont(yearIndex, monthIndex)[0]) +
+          fetchdate(monthDays[0]) +
           ',"TO_DATE": ' +
-          fetchdate(
-            safe_Format.Day_mont(yearIndex, monthIndex)[
-              safe_Format.Day_mont(yearIndex, monthIndex).length - 1
-            ],
-          ) +
+          fetchdate(monthDays[monthDays.length - 1]) +
           '}',
         'BPAPUS-FILTER': '',
         'BPAPUS-ORDERBY': '',
@@ -585,6 +599,7 @@ const DailyCalendarScreen = () => {
                         {safe_Format.state_years.map((obj, index) => {
                           return (
                             <Picker.Item
+                              key={`year-${obj}-${index}`}
                               color={Colors.itemColor}
                               style={{
                                 backgroundColor:
@@ -627,6 +642,7 @@ const DailyCalendarScreen = () => {
                         {safe_Format.months_th.map((obj, index) => {
                           return (
                             <Picker.Item
+                              key={`month-${index}-${obj}`}
                               color={Colors.itemColor}
                               style={{
                                 backgroundColor:
@@ -812,6 +828,7 @@ const DailyCalendarScreen = () => {
                         .map((item, index) => {
                           return (
                             <View
+                              key={`calendar-row-${yearIndex}-${monthIndex}-${index}`}
                               style={{
                                 flexDirection: 'row',
                                 justifyContent: 'space-between',
