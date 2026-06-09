@@ -279,29 +279,27 @@ const ShowInComeTeam = ({ route }) => {
                                     <KeyboardAvoidingView keyboardVerticalOffset={1} behavior={'position'}>
                                         <TouchableNativeFeedback>
                                             <View >
-                                                {arrayObj.map((item) => {
+                                                {arrayObj.map((item, index) => {
                                                     return (
-                                                        <>
-
-                                                            <View style={tableStyles.tableCell}>
-                                                                <View width={deviceWidth * 0.3} style={tableStyles.tableCellTitle}><Text style={{
-                                                                    fontSize: FontSize.medium,
-                                                                    color: Colors.fontColor,
-                                                                    alignSelf: 'flex-start'
-                                                                }} >{item.code}</Text></View>
-                                                                <View width={deviceWidth * 0.3} style={tableStyles.tableCellTitle}><Text style={{
-                                                                    fontSize: FontSize.medium,
-                                                                    color: Colors.fontColor,
-                                                                    alignSelf: 'flex-start'
-                                                                }} >{item.name}</Text></View>
-                                                                <View width={deviceWidth * 0.4} style={tableStyles.tableCellTitle}><Text style={{
-                                                                    fontSize: FontSize.medium,
-                                                                    color: Colors.fontColor,
-                                                                    alignSelf: 'flex-end'
-                                                                }} >{safe_Format.currencyFormat(item.sums)}</Text></View>
-                                                            </View>
-
-                                                        </>
+                                                        <View
+                                                            key={`${item.id ?? index}-${item.code}-${item.name}`}
+                                                            style={tableStyles.tableCell}>
+                                                            <View width={deviceWidth * 0.3} style={tableStyles.tableCellTitle}><Text style={{
+                                                                fontSize: FontSize.medium,
+                                                                color: Colors.fontColor,
+                                                                alignSelf: 'flex-start'
+                                                            }} >{item.code}</Text></View>
+                                                            <View width={deviceWidth * 0.3} style={tableStyles.tableCellTitle}><Text style={{
+                                                                fontSize: FontSize.medium,
+                                                                color: Colors.fontColor,
+                                                                alignSelf: 'flex-start'
+                                                            }} >{item.name}</Text></View>
+                                                            <View width={deviceWidth * 0.4} style={tableStyles.tableCellTitle}><Text style={{
+                                                                fontSize: FontSize.medium,
+                                                                color: Colors.fontColor,
+                                                                alignSelf: 'flex-end'
+                                                            }} >{safe_Format.currencyFormat(item.sums)}</Text></View>
+                                                        </View>
                                                     )
                                                 })}
 

@@ -80,12 +80,11 @@ const SelectBase = ({ route }) => {
   const image = '../images/UI/Asset35.png';
 
   const getBaseOption = (item, index) => {
-    const rawName = typeof item?.nameser === 'string' ? item.nameser.trim() : '';
+    const rawName =
+      typeof item?.nameser === 'string' ? item.nameser.trim() : '';
     const rawUrl = typeof item?.urlser === 'string' ? item.urlser.trim() : '';
     const fallbackName = rawUrl
-      ? rawUrl
-          .replace(/^https?:\/\//i, '')
-          .split('/')[0]
+      ? rawUrl.replace(/^https?:\/\//i, '').split('/')[0]
       : `${Language.t('selectBase.lebel')} ${index + 1}`;
     const value = rawName || rawUrl || String(index);
 

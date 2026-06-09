@@ -22,6 +22,7 @@ import {
 import CheckBox from '@react-native-community/checkbox';
 import DeviceInfo from 'react-native-device-info';
 import { NetworkInfo } from "react-native-network-info";
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 
 
@@ -454,24 +455,18 @@ const LoginScreen = () => {
                         />
                         <TouchableOpacity onPress={updateSecureTextEntry}>
                           {data.secureTextEntry ? (
-                             <Image
-                             style={{
-                               width: FontSize.large,
-                               height: FontSize.large,
-                             }}
-                             resizeMode="contain"
-                             source={require('../img/iconsMenu/eye-off.png')}
-                           />
+                            <MaterialCommunityIcons
+                              name="eye-off"
+                              size={FontSize.large}
+                              color={Colors.buttonColorPrimary}
+                            />
  
                          ) : (
-                           <Image
-                             style={{
-                               width: FontSize.large,
-                               height: FontSize.large,
-                             }}
-                             resizeMode="contain"
-                             source={require('../img/iconsMenu/eye.png')}
-                           />
+                            <MaterialCommunityIcons
+                              name="eye"
+                              size={FontSize.large}
+                              color={Colors.buttonColorPrimary}
+                            />
                           )}
                         </TouchableOpacity>
                       </View>

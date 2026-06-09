@@ -125,7 +125,11 @@ const M2 = () => {
                             <View style={{ padding: 20, marginTop: 0 }}>
                                 <View>
                                     <TouchableOpacity
-                                        onPress={() => navigation.navigate('ShowAR', { nav: 'ShowAR', routeName: 'AR_SellAmount' })}
+                                        onPress={() => navigation.navigate('ShowAR', {
+                                            nav: 'ShowAR',
+                                            routeName: 'AR_SellAmount',
+                                            title: 'แสดงยอดขายแต่ละเดือน',
+                                        })}
                                              >
                                         <View
                                            style={{
@@ -163,7 +167,11 @@ const M2 = () => {
                                         </View>
                                     </TouchableOpacity>
                                     <TouchableOpacity
-                                        onPress={() => navigation.navigate('ShowAR', { nav: 'ShowAR', routeName: 'AR_ShowArdetail' })}
+                                        onPress={() => navigation.navigate('ShowAR', {
+                                            nav: 'ShowAR',
+                                            routeName: 'AR_ShowArdetail',
+                                            title: 'แสดงยอดหนี้คงค้าง',
+                                        })}
                                              >
                                         <View
                                            style={{
@@ -201,7 +209,11 @@ const M2 = () => {
                                         </View>
                                     </TouchableOpacity>
                                     <TouchableOpacity
-                                        onPress={() => navigation.navigate('ShowAR', { nav: 'ShowAR', routeName: 'AR_SellAmountByIcDept' })}
+                                        onPress={() => navigation.navigate('ShowAR', {
+                                            nav: 'ShowAR',
+                                            routeName: 'AR_SellAmountByIcDept',
+                                            title: 'แสดงยอดขายตามหมวดสินค้า',
+                                        })}
                                              >
                                         <View
                                            style={{
@@ -277,7 +289,11 @@ const M2 = () => {
                                         </View>
                                     </TouchableOpacity> */}
                                     <TouchableOpacity
-                                        onPress={() => navigation.navigate('ShowAR', { nav: 'ShowAR', routeName: 'AR_Address' })}
+                                        onPress={() => navigation.navigate('ShowAR', {
+                                            nav: 'ShowAR',
+                                            routeName: 'AR_Address',
+                                            title: 'แสดงที่อยู่',
+                                        })}
                                              >
                                         <View
                                            style={{

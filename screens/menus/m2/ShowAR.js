@@ -77,6 +77,7 @@ const showAR = ({ route }) => {
     const [end_date, setE_date] = useState(new Date())
     const [sum, setSum] = useState(0)
     const [textsearch, setSearch] = useState('')
+    const screenTitle = route?.params?.title || 'ยอดลูกหนี้แต่ละราย';
 
 
     var ser_die = true
@@ -178,7 +179,7 @@ const showAR = ({ route }) => {
                                 marginLeft: 12,
                                 fontSize: FontSize.medium,
                                 color: 'black'
-                            }}>{`ยอดลูกหนี้แต่ละราย`}</Text>
+                            }}>{screenTitle}</Text>
                     </View>
 
 
@@ -205,7 +206,7 @@ const showAR = ({ route }) => {
                             placeholderTextColor={Colors.fontColorSecondary}
                             value={textsearch}
 
-                            placeholder={'ชื่อลูกหนี้'}
+                            placeholder={`ค้นหา${screenTitle}`}
                             onChangeText={(val) => {
                                 setSearch(val)
                             }} />
