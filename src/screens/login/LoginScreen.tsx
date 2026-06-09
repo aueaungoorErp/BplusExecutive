@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { NavigationActions } from 'react-navigation';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Fumi } from 'react-native-textinput-effects';
 import { connect } from 'react-redux';
 import { GetfetchAuthLoginApi } from '../../actions';
@@ -124,6 +125,7 @@ class LoginScreen extends Component {
       user: '',
       pass: '',
       visibleModal: 1,
+      secureTextEntry: true,
     };
     LogBox.ignoreLogs([
       'Warning: isMounted(...) is deprecated',
@@ -228,6 +230,11 @@ class LoginScreen extends Component {
   onChangePass_(txt1) {
     this.setState({ pass: txt1 });
   }
+  updateSecureTextEntry = () => {
+    this.setState(prevState => ({
+      secureTextEntry: !prevState.secureTextEntry,
+    }));
+  };
   goToScreen() {
     console.log('login name = ' + this.state.user);
     setTimeout(() => {
@@ -403,11 +410,21 @@ class LoginScreen extends Component {
                   labelStyle={styles.inputLabel}
                   inputStyle={styles.inputText}
                   returnKeyType="done"
-                  secureTextEntry={true}
+                  secureTextEntry={this.state.secureTextEntry}
                   onChangeText={this.onChangePass_.bind(this)}
                   value={this.state.pass}
                   onSubmitEditing={() => this._FetchApiData()}
                 />
+                <TouchableOpacity
+                  style={styles.eyeIconButton}
+                  onPress={this.updateSecureTextEntry}
+                >
+                  <MaterialCommunityIcons
+                    name={this.state.secureTextEntry ? 'eye-off' : 'eye'}
+                    size={22}
+                    color="#f95a25"
+                  />
+                </TouchableOpacity>
               </View>
               <TouchableOpacity
                 style={[styles.submitButton, { backgroundColor: '#fe8a01' }]}
@@ -506,6 +523,17 @@ const styles = StyleSheet.create({
   inputText: {
     color: '#f95a25',
     marginLeft: 24,
+    marginRight: 36,
+  },
+  eyeIconButton: {
+    position: 'absolute',
+    right: 28,
+    top: 17,
+    zIndex: 2,
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   submitButton: {
     backgroundColor: '#7a42f4',

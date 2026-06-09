@@ -13,7 +13,6 @@ import {
   Platform,
   BackHandler,
   StatusBar,
-
   ScrollView,
   TouchableNativeFeedback,
   TouchableOpacity,
@@ -21,28 +20,18 @@ import {
 
 import CheckBox from '@react-native-community/checkbox';
 import DeviceInfo from 'react-native-device-info';
-import { NetworkInfo } from "react-native-network-info";
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-
-
+import { NetworkInfo } from 'react-native-network-info';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-
 import { useStateIfMounted } from 'use-state-if-mounted';
-
-
 
 import { useNavigation } from '@react-navigation/native';
 
-
 import { useSelector, connect, useDispatch } from 'react-redux';
-
-
 
 import { Language, changeLanguage } from '../translations/I18n';
 import { FontSize } from '../components/FontSizeHelper';
-
 
 import * as loginActions from '../src/actions/loginActions';
 import * as registerActions from '../src/actions/registerActions';
@@ -56,7 +45,6 @@ const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 
 const LoginScreen = () => {
-
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
@@ -74,23 +62,29 @@ const LoginScreen = () => {
   } = styles;
 
   useEffect(() => {
-
-
     //backsakura013
   }, []);
 
   const [GUID, setGUID] = useStateIfMounted('');
 
-  const [isSelected, setSelection] = useState(loginReducer.userloggedIn == true ? loginReducer.userloggedIn : false);
-  const [isSFeatures, setSFeatures] = useState(loginReducer.isSFeatures == true ? loginReducer.isSFeatures : false);
+  const [isSelected, setSelection] = useState(
+    loginReducer.userloggedIn == true ? loginReducer.userloggedIn : false,
+  );
+  const [isSFeatures, setSFeatures] = useState(
+    loginReducer.isSFeatures == true ? loginReducer.isSFeatures : false,
+  );
 
   const [loading, setLoading] = useStateIfMounted(false);
   const [loading_backG, setLoading_backG] = useStateIfMounted(true);
 
   const [resultJson, setResultJson] = useState([]);
   const [marker, setMarker] = useState(false);
-  const [username, setUsername] = useState(loginReducer.userloggedIn == true ? loginReducer.userNameED : '');
-  const [password, setPassword] = useState(loginReducer.userloggedIn == true ? loginReducer.passwordED : '');
+  const [username, setUsername] = useState(
+    loginReducer.userloggedIn == true ? loginReducer.userNameED : '',
+  );
+  const [password, setPassword] = useState(
+    loginReducer.userloggedIn == true ? loginReducer.passwordED : '',
+  );
   const activityReducer = useSelector(({ activityReducer }) => activityReducer);
   const [data, setData] = useStateIfMounted({
     secureTextEntry: true,
@@ -98,30 +92,37 @@ const LoginScreen = () => {
   const image = '../images/UI/Login/Asset4.png';
 
   useEffect(() => {
-
-    const serviceID = '{167f0c96-86fd-488f-94d1-cc3169d60b1a}'
+    const serviceID = '{167f0c96-86fd-488f-94d1-cc3169d60b1a}';
     if (serviceID != loginReducer.serviceID)
-      dispatch(loginActions.serviceID(serviceID))
+      dispatch(loginActions.serviceID(serviceID));
 
-    console.log('>> isSFeatures : ', isSFeatures)
-    if (registerReducer.machineNum.length == 0 || registerReducer.machineNum == "02:00:00:00:00:00") getMac()
+    console.log('>> isSFeatures : ', isSFeatures);
+    if (
+      registerReducer.machineNum.length == 0 ||
+      registerReducer.machineNum == '02:00:00:00:00:00'
+    )
+      getMac();
 
-    console.log('>> Language : ', Language.getLang())
-
+    console.log('>> Language : ', Language.getLang());
   }, []);
   useEffect(() => {
     if (!databaseReducer.Data.urlser && !loading_backG)
       Alert.alert(
         Language.t('notiAlert.header'),
-        Language.t('notiAlert.connectBusiness'), [{ text: Language.t('alert.ok'), onPress: () => navigation.navigate('SelectScreen', { data: '' }) }]);
-
+        Language.t('notiAlert.connectBusiness'),
+        [
+          {
+            text: Language.t('alert.ok'),
+            onPress: () => navigation.navigate('SelectScreen', { data: '' }),
+          },
+        ],
+      );
   }, [loading_backG]);
   useEffect(() => {
     dispatch(loginActions.setFingerprint(isSFeatures));
-
   }, [isSFeatures]);
   useEffect(() => {
-    console.log('>> machineNum :', registerReducer.machineNum + '\n\n\n\n')
+    console.log('>> machineNum :', registerReducer.machineNum + '\n\n\n\n');
   }, [registerReducer.machineNum]);
 
   const closeLoading = () => {
@@ -149,38 +150,41 @@ const LoginScreen = () => {
       }
     }
 
-
-    await DeviceInfo.getMacAddress().then((mac) => {
-      console.log(DeviceInfo.getDeviceName())
-      console.log('\nmachine > > ' + mac)
-      if (mac.length > 0 && mac != "02:00:00:00:00:00") dispatch(registerActions.machine(mac))
-      else NetworkInfo.getBSSID().then(macwifi => {
-        console.log('\nmachine(wifi) > > ' + macwifi)
-        if (macwifi.length > 0 && macwifi != "02:00:00:00:00:00") dispatch(registerActions.machine(macwifi))
-        else {
-          const deviceId = DeviceInfo.getUniqueId();
-          console.log('\ndeviceId > > ' + deviceId)
-          if (deviceId.length > 0 && deviceId != "02:00:00:00:00:00") dispatch(registerActions.machine(deviceId))
-          else {
-            dispatch(registerActions.machine(uuid))
-          }
-        }
-      }).catch((e) => dispatch(registerActions.machine(uuid)))
-    }).catch((e) => dispatch(registerActions.machine(uuid)))
-  }
-
-
-
+    await DeviceInfo.getMacAddress()
+      .then(mac => {
+        console.log(DeviceInfo.getDeviceName());
+        console.log('\nmachine > > ' + mac);
+        if (mac.length > 0 && mac != '02:00:00:00:00:00')
+          dispatch(registerActions.machine(mac));
+        else
+          NetworkInfo.getBSSID()
+            .then(macwifi => {
+              console.log('\nmachine(wifi) > > ' + macwifi);
+              if (macwifi.length > 0 && macwifi != '02:00:00:00:00:00')
+                dispatch(registerActions.machine(macwifi));
+              else {
+                const deviceId = DeviceInfo.getUniqueId();
+                console.log('\ndeviceId > > ' + deviceId);
+                if (deviceId.length > 0 && deviceId != '02:00:00:00:00:00')
+                  dispatch(registerActions.machine(deviceId));
+                else {
+                  dispatch(registerActions.machine(uuid));
+                }
+              }
+            })
+            .catch(e => dispatch(registerActions.machine(uuid)));
+      })
+      .catch(e => dispatch(registerActions.machine(uuid)));
+  };
 
   const tslogin = async () => {
-    await setLoading(true)
-    await UnRegister()
-    await regisMacAdd()
-    await setLoading(false)
-  }
+    await setLoading(true);
+    await UnRegister();
+    await regisMacAdd();
+    await setLoading(false);
+  };
 
   const regisMacAdd = async () => {
-
     await fetch(databaseReducer.Data.urlser + '/DevUsers', {
       method: 'POST',
       body: JSON.stringify({
@@ -193,36 +197,51 @@ const LoginScreen = () => {
           '","BPAPUS-CNTRY-CODE": "66","BPAPUS-MOBILE": "mobile login"}',
       }),
     })
-      .then((response) => response.json())
-      .then(async (json) => {
+      .then(response => response.json())
+      .then(async json => {
         if (json.ResponseCode == 200 && json.ReasonString == 'Completed') {
           await _fetchGuidLog();
         } else {
           console.log('Function Parameter Required');
           let temp_error = 'error_ser.' + json.ResponseCode;
-          console.log('>> ', temp_error)
-          Alert.alert(
-            Language.t('alert.errorTitle'),
-            Language.t(temp_error), [{ text: Language.t('alert.ok'), onPress: () => dispatch(loginActions.guid([])) }]);
+          console.log('>> ', temp_error);
+          Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [
+            {
+              text: Language.t('alert.ok'),
+              onPress: () => dispatch(loginActions.guid([])),
+            },
+          ]);
         }
       })
-      .catch((error) => {
+      .catch(error => {
         console.log('ERROR at regisMacAdd ' + error);
         console.log('http', databaseReducer.Data.urlser);
         if (databaseReducer.Data.urlser == '') {
           Alert.alert(
             Language.t('alert.errorTitle'),
-            Language.t('selectBase.error'), [{ text: Language.t('alert.ok'), onPress: () => dispatch(loginActions.guid([])) }]);
+            Language.t('selectBase.error'),
+            [
+              {
+                text: Language.t('alert.ok'),
+                onPress: () => dispatch(loginActions.guid([])),
+              },
+            ],
+          );
         } else {
           Alert.alert(
             Language.t('alert.errorTitle'),
-            Language.t('alert.internetError'), [{ text: Language.t('alert.ok'), onPress: () => dispatch(loginActions.guid([])) }]);
+            Language.t('alert.internetError'),
+            [
+              {
+                text: Language.t('alert.ok'),
+                onPress: () => dispatch(loginActions.guid([])),
+              },
+            ],
+          );
         }
-
       });
   };
   const UnRegister = async () => {
-
     await fetch(databaseReducer.Data.urlser + '/DevUsers', {
       method: 'POST',
       body: JSON.stringify({
@@ -230,31 +249,25 @@ const LoginScreen = () => {
         'BPAPUS-LOGIN-GUID': '',
         'BPAPUS-FUNCTION': 'UnRegister',
         'BPAPUS-PARAM':
-          '{"BPAPUS-MACHINE": "' +
-          registerReducer.machineNum +
-          '" }',
+          '{"BPAPUS-MACHINE": "' + registerReducer.machineNum + '" }',
       }),
     })
-      .then((response) => response.json())
-      .then((json) => {
-
+      .then(response => response.json())
+      .then(json => {
         console.log(json);
-
       })
-      .catch((error) => {
+      .catch(error => {
         console.error('ERROR at _fetchGuidLogin' + error);
-
       });
-
   };
 
   const _fetchGuidLog = async () => {
     console.log('FETCH GUID LOGIN ', databaseReducer.Data.urlser);
-    let tempusername = username.toUpperCase()
-    let temppassword = password.toUpperCase()
+    let tempusername = username.toUpperCase();
+    let temppassword = password.toUpperCase();
     if (loginReducer.guid.length > 0) {
-      tempusername = loginReducer.userNameED
-      temppassword = loginReducer.passwordED
+      tempusername = loginReducer.userNameED;
+      temppassword = loginReducer.passwordED;
     }
     await fetch(databaseReducer.Data.urlser + '/DevUsers', {
       method: 'POST',
@@ -268,93 +281,133 @@ const LoginScreen = () => {
           '","BPAPUS-USERID": "' +
           tempusername +
           '","BPAPUS-PASSWORD": "' +
-          temppassword + '"}',
+          temppassword +
+          '"}',
       }),
     })
-      .then((response) => response.json())
-      .then((json) => {
-        console.log(json)
+      .then(response => response.json())
+      .then(json => {
+        console.log(json);
         if (json && json.ResponseCode == '635') {
           Alert.alert(
             Language.t('alert.errorTitle'),
-            Language.t('alert.errorDetail'), [{ text: Language.t('alert.ok'), onPress: () => dispatch(loginActions.guid([])) }]);
+            Language.t('alert.errorDetail'),
+            [
+              {
+                text: Language.t('alert.ok'),
+                onPress: () => dispatch(loginActions.guid([])),
+              },
+            ],
+          );
           console.log('NOT FOUND MEMBER');
         } else if (json && json.ResponseCode == '629') {
           Alert.alert(
             Language.t('alert.errorTitle'),
-            'Function Parameter Required', [{ text: Language.t('alert.ok'), onPress: () => dispatch(loginActions.guid([])) }]);
+            'Function Parameter Required',
+            [
+              {
+                text: Language.t('alert.ok'),
+                onPress: () => dispatch(loginActions.guid([])),
+              },
+            ],
+          );
         } else if (json && json.ResponseCode == '200') {
-          let responseData = JSON.parse(json.ResponseData)
-          dispatch(loginActions.guid(responseData.BPAPUS_GUID))
-          dispatch(loginActions.userNameED(username.toUpperCase()))
-          dispatch(loginActions.passwordED(password.toUpperCase()))
-          dispatch(loginActions.userlogin(isSelected))
+          let responseData = JSON.parse(json.ResponseData);
+          dispatch(loginActions.guid(responseData.BPAPUS_GUID));
+          dispatch(loginActions.userNameED(username.toUpperCase()));
+          dispatch(loginActions.passwordED(password.toUpperCase()));
+          dispatch(loginActions.userlogin(isSelected));
 
-          navigation.dispatch(
-            navigation.replace('MainScreen', {})
-          )
+          navigation.dispatch(navigation.replace('MainScreen', {}));
         } else {
           console.log('Function Parameter Required');
           let temp_error = 'error_ser.' + json.ResponseCode;
-          console.log('>> ', temp_error)
-          Alert.alert(
-            Language.t('alert.errorTitle'),
-            Language.t(temp_error), [{ text: Language.t('alert.ok'), onPress: () => dispatch(loginActions.guid([])) }]);
+          console.log('>> ', temp_error);
+          Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [
+            {
+              text: Language.t('alert.ok'),
+              onPress: () => dispatch(loginActions.guid([])),
+            },
+          ]);
         }
       })
-      .catch((error) => {
+      .catch(error => {
         console.error('ERROR at _fetchGuidLogin' + error);
         if (databaseReducer.Data.urlser == '') {
           Alert.alert(
             Language.t('alert.errorTitle'),
-            Language.t('selectBase.error'), [{ text: Language.t('alert.ok'), onPress: () => dispatch(loginActions.guid([])) }]);
-
+            Language.t('selectBase.error'),
+            [
+              {
+                text: Language.t('alert.ok'),
+                onPress: () => dispatch(loginActions.guid([])),
+              },
+            ],
+          );
         } else {
           Alert.alert(
             Language.t('alert.errorTitle'),
-            Language.t('alert.internetError') + "1", [{ text: Language.t('alert.ok'), onPress: () => dispatch(loginActions.guid([])) }]);
+            Language.t('alert.internetError') + '1',
+            [
+              {
+                text: Language.t('alert.ok'),
+                onPress: () => dispatch(loginActions.guid([])),
+              },
+            ],
+          );
         }
       });
-    setLoading(false)
+    setLoading(false);
   };
 
-
-
-
   return (
-
     <SafeAreaView style={container1}>
       <StatusBar hidden={true} />
-      <ImageBackground source={require(image)} onLoadEnd={async () => {
-        setLoading_backG(false)
-        if (loginReducer.guid.length > 0) {
-
-          await tslogin()
-        }
-      }} resizeMode="cover" style={styles.image}>
-        {!loading_backG ?
+      <ImageBackground
+        source={require(image)}
+        onLoadEnd={async () => {
+          setLoading_backG(false);
+          if (loginReducer.guid.length > 0) {
+            await tslogin();
+          }
+        }}
+        resizeMode="cover"
+        style={styles.image}
+      >
+        {!loading_backG ? (
           <ScrollView>
             <View style={tabbar}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('SelectScreen', { data: '' })}>
-                   <Image
-                            style={{
-                              width: FontSize.large,
-                              height: FontSize.large,
-                            }}
-                            resizeMode="contain"
-                            source={require('../img/gearIcon.png')}
-                          />
+                onPress={() =>
+                  navigation.navigate('SelectScreen', { data: '' })
+                }
+              >
+                <Image
+                  style={{
+                    width: FontSize.large,
+                    height: FontSize.large,
+                  }}
+                  resizeMode="contain"
+                  source={require('../img/gearIcon.png')}
+                />
               </TouchableOpacity>
               <Text
                 style={{
                   marginLeft: 12,
                   fontSize: FontSize.small,
                   color: Colors.borderColor,
-                }}>{databaseReducer.Data.nameser ? databaseReducer.Data.nameser : 'ไม่มีการเชื่อมต่อกิจการ'}</Text>
+                }}
+              >
+                {databaseReducer.Data.nameser
+                  ? databaseReducer.Data.nameser
+                  : 'ไม่มีการเชื่อมต่อกิจการ'}
+              </Text>
             </View>
             {loginReducer.guid.length == 0 && (
-              <KeyboardAvoidingView keyboardVerticalOffset={1} behavior={'position'}>
+              <KeyboardAvoidingView
+                keyboardVerticalOffset={1}
+                behavior={'position'}
+              >
                 <View style={{ padding: 20, marginTop: deviceHeight / 2.3 }}>
                   <View>
                     <View
@@ -374,8 +427,15 @@ const LoginScreen = () => {
                         shadowOpacity: 0.5,
                         shadowRadius: 1.0,
                         elevation: 15,
-                      }}>
-                      <View style={{ height: 40, flexDirection: 'row', alignItems: 'center' }}>
+                      }}
+                    >
+                      <View
+                        style={{
+                          height: 40,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                        }}
+                      >
                         <Image
                           style={{ height: 30, width: 30 }}
                           resizeMode={'contain'}
@@ -391,14 +451,14 @@ const LoginScreen = () => {
                             fontSize: FontSize.medium,
                             borderBottomWidth: 0.7,
                           }}
-
                           placeholderTextColor={Colors.fontColorSecondary}
                           value={username}
                           maxLength={10}
                           placeholder={Language.t('login.username')}
-                          onChangeText={(val) => {
+                          onChangeText={val => {
                             setUsername(val);
-                          }}></TextInput>
+                          }}
+                        ></TextInput>
                       </View>
                     </View>
                   </View>
@@ -424,9 +484,15 @@ const LoginScreen = () => {
                         shadowRadius: 1.0,
 
                         elevation: 15,
-                      }}>
-
-                      <View style={{ height: 40, flexDirection: 'row', alignItems: 'center' }}>
+                      }}
+                    >
+                      <View
+                        style={{
+                          height: 40,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                        }}
+                      >
                         <Image
                           style={{ height: 30, width: 30 }}
                           resizeMode={'contain'}
@@ -449,61 +515,72 @@ const LoginScreen = () => {
                           value={password}
                           placeholderTextColor={Colors.fontColorSecondary}
                           placeholder={Language.t('login.password')}
-                          onChangeText={(val) => {
+                          onChangeText={val => {
                             setPassword(val);
                           }}
                         />
-                        <TouchableOpacity onPress={updateSecureTextEntry}>
+                        <TouchableOpacity
+                          style={styles.eyeIconButton}
+                          onPress={updateSecureTextEntry}
+                        >
                           {data.secureTextEntry ? (
-                            <MaterialCommunityIcons
-                              name="eye-off"
-                              size={FontSize.large}
-                              color={Colors.buttonColorPrimary}
+                            <Image
+                              style={styles.eyeIcon}
+                              resizeMode="contain"
+                              source={require('../img/iconsMenu/eye-off.png')}
                             />
- 
-                         ) : (
-                            <MaterialCommunityIcons
-                              name="eye"
-                              size={FontSize.large}
-                              color={Colors.buttonColorPrimary}
+                          ) : (
+                            <Image
+                              style={styles.eyeIcon}
+                              resizeMode="contain"
+                              source={require('../img/iconsMenu/eye.png')}
                             />
                           )}
                         </TouchableOpacity>
                       </View>
                     </View>
                   </View>
-                  <View style={styles.checkboxContainer} >
+                  <View style={styles.checkboxContainer}>
                     <View></View>
                     <CheckBox
                       value={isSelected}
-                      onValueChange={(value) => setSelection(value)}
-
-                      tintColors={{ true: Colors.fontColor, false: Colors.fontColor }}
+                      onValueChange={value => setSelection(value)}
+                      tintColors={{
+                        true: Colors.fontColor,
+                        false: Colors.fontColor,
+                      }}
                       style={styles.checkbox}
                     />
-                    <Text style={styles.label} onPress={() => setSelection(!isSelected)}>{Language.t('login.rememberpassword')}</Text>
+                    <Text
+                      style={styles.label}
+                      onPress={() => setSelection(!isSelected)}
+                    >
+                      {Language.t('login.rememberpassword')}
+                    </Text>
                   </View>
                   <View>
                     <View
                       style={{
                         flexDirection: 'column',
-                      }}>
-                      <TouchableNativeFeedback
-                        onPress={() => tslogin()}>
+                      }}
+                    >
+                      <TouchableNativeFeedback onPress={() => tslogin()}>
                         <View
                           style={{
                             borderRadius: 20,
                             flexDirection: 'column',
                             padding: 20,
                             backgroundColor: Colors.buttonColorPrimary,
-                          }}>
+                          }}
+                        >
                           <Text
                             style={{
                               color: Colors.buttonTextColor,
                               alignSelf: 'center',
                               fontSize: FontSize.medium,
                               fontWeight: 'bold',
-                            }}>
+                            }}
+                          >
                             {Language.t('login.buttonLogin')}
                           </Text>
                         </View>
@@ -512,15 +589,18 @@ const LoginScreen = () => {
                     <View
                       style={{
                         flexDirection: 'column',
-                        alignItems: 'center'
-                      }}>
-                      <Text style={Colors.borderColor}>version 2.5.9</Text>
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Text style={Colors.borderColor}>version 2.5.10</Text>
                     </View>
-
                   </View>
                 </View>
-              </KeyboardAvoidingView>)}
-          </ScrollView> : <View
+              </KeyboardAvoidingView>
+            )}
+          </ScrollView>
+        ) : (
+          <View
             style={{
               width: deviceWidth,
               height: deviceHeight,
@@ -530,8 +610,9 @@ const LoginScreen = () => {
               justifyContent: 'center',
               alignContent: 'center',
               position: 'absolute',
-            }}>
-          </View>}
+            }}
+          ></View>
+        )}
         {loading && (
           <View
             style={{
@@ -543,7 +624,8 @@ const LoginScreen = () => {
               justifyContent: 'center',
               alignContent: 'center',
               position: 'absolute',
-            }}>
+            }}
+          >
             <ActivityIndicator
               style={{
                 borderRadius: 15,
@@ -565,13 +647,12 @@ const LoginScreen = () => {
 
 const styles = StyleSheet.create({
   container1: {
-
     flex: 1,
     flexDirection: 'column',
   },
   image: {
     flex: 1,
-    justifyContent: "center"
+    justifyContent: 'center',
   },
   container2: {
     width: deviceWidth,
@@ -604,7 +685,6 @@ const styles = StyleSheet.create({
   topImage: {
     width: null,
     height: deviceWidth / 2,
-
   },
   button: {
     marginTop: 10,
@@ -621,24 +701,32 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: 10,
   },
+  eyeIconButton: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eyeIcon: {
+    width: 24,
+    height: 24,
+    tintColor: Colors.buttonColorPrimary,
+  },
   checkboxContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
     marginTop: 10,
     marginLeft: 10,
     marginBottom: 20,
   },
   checkbox: {
-
-    alignSelf: "center",
+    alignSelf: 'center',
     borderBottomColor: Colors.fontColor,
     color: Colors.fontColor,
-
   },
   label: {
     margin: 8,
     color: Colors.fontColor,
   },
 });
-
 
 export default LoginScreen;
