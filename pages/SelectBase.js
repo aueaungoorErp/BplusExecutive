@@ -38,6 +38,8 @@ import * as loginActions from '../src/actions/loginActions';
 import * as registerActions from '../src/actions/registerActions';
 import * as databaseActions from '../src/actions/databaseActions';
 
+const CURRENT_BASE_VALUE = '__current_base__';
+
 const SelectBase = ({ route }) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -101,6 +103,21 @@ const SelectBase = ({ route }) => {
   const baseOptions = (Array.isArray(items) ? items : []).map((item, index) =>
     getBaseOption(item, index),
   );
+  const trimmedBaseName = typeof basename === 'string' ? basename.trim() : '';
+  const hasSelectedBaseOption = baseOptions.some(
+    option => option.value === selectbaseValue,
+  );
+  const shouldShowCurrentBaseOption =
+    trimmedBaseName.length > 0 && !hasSelectedBaseOption;
+  const pickerOptions = shouldShowCurrentBaseOption
+    ? [
+        {
+          label: trimmedBaseName,
+          value: CURRENT_BASE_VALUE,
+        },
+        ...baseOptions,
+      ]
+    : baseOptions;
   const setlanguageState = itemValue => {
     dispatch(loginActions.setLanguage(itemValue));
     console.log(itemValue);
@@ -148,6 +165,7 @@ const SelectBase = ({ route }) => {
     if (route.params?.post) {
       setBasename(route.params.post.value);
       setBsaeurl(route.params.post.label);
+      setSelectbaseValue(CURRENT_BASE_VALUE);
 
       const scannedUsername =
         route.params.post.username ||
@@ -188,6 +206,11 @@ const SelectBase = ({ route }) => {
   const _onPressSelectbaseValue = async itemValue => {
     console.log(itemValue);
     setSelectbaseValue(itemValue);
+
+    if (itemValue == CURRENT_BASE_VALUE) {
+      return;
+    }
+
     if (itemValue != '-1') {
       for (let i in items) {
         const option = getBaseOption(items[i], Number(i));
@@ -676,7 +699,7 @@ const SelectBase = ({ route }) => {
                         _onPressSelectbaseValue(itemValue)
                       }
                     >
-                      {baseOptions.map(option => {
+                      {pickerOptions.map(option => {
                         return (
                           <Picker.Item
                             key={option.value}

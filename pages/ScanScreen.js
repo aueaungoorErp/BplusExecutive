@@ -23,8 +23,49 @@ import { Base64 } from '../src/safe_Format';
 
 const backgroundImage = require('../images/UI/Asset35.png');
 
+const EMPTY_QR_ERROR = {
+  title: '',
+  detail: '',
+};
+
 const ScanScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
+  const [qrError, setQrError] = useState(EMPTY_QR_ERROR);
+
+  const closeQrError = () => {
+    setQrError(EMPTY_QR_ERROR);
+  };
+
+  const openQrError = (title, detail) => {
+    setQrError({
+      title: title || Language.t('alert.errorTitle'),
+      detail: detail || Language.t('selectBase.notfound'),
+    });
+  };
+
+  const getErrorMessage = error => {
+    if (!error) {
+      return 'Unknown QR error';
+    }
+
+    if (typeof error === 'string') {
+      return error;
+    }
+
+    if (error.message) {
+      return error.message;
+    }
+
+    if (error.code) {
+      return String(error.code);
+    }
+
+    try {
+      return JSON.stringify(error);
+    } catch (jsonError) {
+      return 'Unknown QR error';
+    }
+  };
 
   const extractQrFields = payload => {
     const emptyResult = {
@@ -46,14 +87,27 @@ const ScanScreen = ({ navigation, route }) => {
       urlser: 'baseUrl',
       url: 'baseUrl',
       server: 'baseUrl',
+      databaseurl: 'baseUrl',
       usernameser: 'username',
       username: 'username',
       user: 'username',
       userid: 'username',
+      loginid: 'username',
+      loginname: 'username',
+      bpapususerid: 'username',
       passwordser: 'password',
       password: 'password',
       pass: 'password',
       pwd: 'password',
+      loginpassword: 'password',
+      bpapuspassword: 'password',
+    };
+
+    const resolveMappedKey = rawKey => {
+      const normalizedKey = String(rawKey).trim().toLowerCase();
+      const compactKey = normalizedKey.replace(/[^a-z0-9]/g, '');
+
+      return keyMap[normalizedKey] || keyMap[compactKey] || null;
     };
 
     try {
@@ -62,7 +116,7 @@ const ScanScreen = ({ navigation, route }) => {
       if (jsonData && typeof jsonData === 'object') {
         return Object.entries(jsonData).reduce(
           (result, [key, value]) => {
-            const mappedKey = keyMap[String(key).toLowerCase()];
+            const mappedKey = resolveMappedKey(key);
 
             if (mappedKey && typeof value === 'string' && value.trim()) {
               result[mappedKey] = value.trim();
@@ -88,9 +142,9 @@ const ScanScreen = ({ navigation, route }) => {
             return result;
           }
 
-          const rawKey = part.slice(0, separatorIndex).trim().toLowerCase();
+          const rawKey = part.slice(0, separatorIndex).trim();
           const rawValue = part.slice(separatorIndex + 1).trim();
-          const mappedKey = keyMap[rawKey];
+          const mappedKey = resolveMappedKey(rawKey);
 
           if (mappedKey && rawValue) {
             result[mappedKey] = rawValue;
@@ -104,10 +158,111 @@ const ScanScreen = ({ navigation, route }) => {
     return extractedPairs;
   };
 
+  const extractPositionalQrFields = payload => {
+    const emptyResult = {
+      baseName: null,
+      baseUrl: null,
+      username: null,
+      password: null,
+    };
+
+    if (!payload || typeof payload !== 'string') {
+      return emptyResult;
+    }
+
+    const parts = payload
+      .split('|')
+      .map(part => part.trim())
+      .filter(Boolean);
+
+    const dllIndex = parts.findIndex(part => part.indexOf('.dll') !== -1);
+
+    if (dllIndex === -1) {
+      return emptyResult;
+    }
+
+    const baseUrl = parts[dllIndex];
+    const remainingParts = parts.slice(dllIndex + 1);
+    const baseName = remainingParts[0] || null;
+    const credentialParts = remainingParts.slice(-2);
+    const username = credentialParts.length === 2 ? credentialParts[0] : null;
+    const password = credentialParts.length === 2 ? credentialParts[1] : null;
+
+    return {
+      baseName,
+      baseUrl,
+      username,
+      password,
+    };
+  };
+
   const waitForNextFrame = () =>
     new Promise(resolve => {
       setTimeout(resolve, 0);
     });
+
+  const withTimeout = (promise, timeoutMs) =>
+    Promise.race([
+      promise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('QR_TIMEOUT')), timeoutMs),
+      ),
+    ]);
+
+  const getQrSourceCandidates = asset => {
+    const candidates = [];
+
+    if (Platform.OS === 'android') {
+      if (asset.path) {
+        candidates.push(asset.path);
+
+        if (!asset.path.startsWith('file://')) {
+          candidates.push(`file://${asset.path}`);
+        }
+      }
+
+      if (asset.uri) {
+        candidates.push(asset.uri);
+      }
+    } else {
+      if (asset.uri) {
+        candidates.push(asset.uri);
+      }
+
+      if (asset.path) {
+        candidates.push(asset.path);
+      }
+    }
+
+    return [...new Set(candidates.filter(Boolean))];
+  };
+
+  const decodeQrFromCandidates = async candidates => {
+    let lastError = null;
+    const attemptErrors = [];
+
+    for (const candidate of candidates) {
+      try {
+        console.log('[ScanScreen] tryingQrCandidate =', candidate);
+
+        const data = await withTimeout(QRreader(candidate), 12000);
+
+        if (data) {
+          return data;
+        }
+      } catch (error) {
+        lastError = error;
+        attemptErrors.push(`${candidate} -> ${getErrorMessage(error)}`);
+        console.log('[ScanScreen] qrCandidateError =', candidate, error);
+      }
+    }
+
+    if (lastError) {
+      lastError.attemptDetails = attemptErrors;
+    }
+
+    throw lastError || new Error('QR_NOT_FOUND');
+  };
 
   const decodePayloadCandidates = data => {
     const candidates = [data];
@@ -125,9 +280,9 @@ const ScanScreen = ({ navigation, route }) => {
 
   const parseQrPayload = data => {
     if (!data) {
-      Alert.alert(
+      openQrError(
         Language.t('alert.errorTitle'),
-        Language.t('selectBase.notfound'),
+        `${Language.t('selectBase.notfound')}\n\nEmpty QR payload`,
       );
       return;
     }
@@ -142,9 +297,9 @@ const ScanScreen = ({ navigation, route }) => {
     );
 
     if (!matchedPayload) {
-      Alert.alert(
+      openQrError(
         Language.t('alert.errorTitle'),
-        Language.t('selectBase.invalid'),
+        `${Language.t('selectBase.invalid')}\n\nRaw: ${String(data)}`,
       );
       return;
     }
@@ -152,14 +307,21 @@ const ScanScreen = ({ navigation, route }) => {
     console.log('[ScanScreen] matchedPayload =', matchedPayload);
 
     const extractedFields = extractQrFields(matchedPayload);
-    console.log('[ScanScreen] extractedFields =', extractedFields);
+    const positionalFields = extractPositionalQrFields(matchedPayload);
+    const mergedFields = {
+      baseName: extractedFields.baseName,
+      baseUrl: extractedFields.baseUrl || positionalFields.baseUrl,
+      username: extractedFields.username || positionalFields.username,
+      password: extractedFields.password || positionalFields.password,
+    };
+    console.log('[ScanScreen] extractedFields =', mergedFields);
 
     const result = matchedPayload.split('|');
 
     if (!result[0] || result[0].indexOf('.dll') === -1) {
-      Alert.alert(
+      openQrError(
         Language.t('alert.errorTitle'),
-        Language.t('selectBase.invalid'),
+        `${Language.t('selectBase.invalid')}\n\nParsed: ${matchedPayload}`,
       );
       return;
     }
@@ -176,28 +338,30 @@ const ScanScreen = ({ navigation, route }) => {
     }
 
     if (!urlname) {
-      Alert.alert(
+      openQrError(
         Language.t('alert.errorTitle'),
-        Language.t('selectBase.invalid'),
+        `${Language.t(
+          'selectBase.invalid',
+        )}\n\nURL name not found in: ${serurl}`,
       );
       return;
     }
 
     const navigationPayload = {
       post: {
-        label: extractedFields.baseUrl || serurl,
-        value: extractedFields.baseName || urlname[0],
-        username: extractedFields.username || '',
-        password: extractedFields.password || '',
+        label: mergedFields.baseUrl || serurl,
+        value: mergedFields.baseName || urlname[0],
+        username: mergedFields.username || '',
+        password: mergedFields.password || '',
       },
       credentials: {
-        username: extractedFields.username || '',
-        password: extractedFields.password || '',
+        username: mergedFields.username || '',
+        password: mergedFields.password || '',
       },
       qrDebug: {
         raw: data,
         matchedPayload,
-        extractedFields,
+        extractedFields: mergedFields,
       },
       data: Date.now(),
     };
@@ -212,37 +376,39 @@ const ScanScreen = ({ navigation, route }) => {
       return;
     }
 
-    const path =
-      Platform.OS === 'android'
-        ? asset.path || asset.uri
-        : asset.uri || asset.path;
+    const candidates = getQrSourceCandidates(asset);
 
-    if (!path) {
-      Alert.alert(
+    if (candidates.length === 0) {
+      openQrError(
         Language.t('alert.errorTitle'),
-        Language.t('selectBase.notfound'),
+        `${Language.t('selectBase.notfound')}\n\nNo asset path or URI found`,
       );
       return;
     }
 
+    closeQrError();
     setLoading(true);
 
     try {
       await waitForNextFrame();
 
-      const data = await Promise.race([
-        QRreader(path),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('QR_TIMEOUT')), 4000),
-        ),
-      ]);
+      const data = await decodeQrFromCandidates(candidates);
       console.log('[ScanScreen] QRreader result =', data);
       parseQrPayload(data);
     } catch (error) {
       console.log('[ScanScreen] decodeImage error =', error);
-      Alert.alert(
+      const attemptDetails = Array.isArray(error?.attemptDetails)
+        ? error.attemptDetails.join('\n')
+        : '';
+      openQrError(
         Language.t('alert.errorTitle'),
-        Language.t('selectBase.notfound'),
+        [
+          Language.t('selectBase.notfound'),
+          `Reason: ${getErrorMessage(error)}`,
+          attemptDetails ? `Attempts:\n${attemptDetails}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n\n'),
       );
     } finally {
       setLoading(false);
@@ -375,6 +541,25 @@ const ScanScreen = ({ navigation, route }) => {
           </View>
         </View>
       </Modal>
+
+      <Modal
+        transparent
+        visible={Boolean(qrError.detail)}
+        animationType="fade"
+        onRequestClose={closeQrError}
+      >
+        <View style={styles.loadingOverlay}>
+          <View style={styles.errorCard}>
+            <Text style={styles.errorTitle}>{qrError.title}</Text>
+            <Text style={styles.errorDetail}>{qrError.detail}</Text>
+            <TouchableOpacity style={styles.errorButton} onPress={closeQrError}>
+              <Text style={styles.errorButtonText}>
+                {Language.t('alert.ok')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 };
@@ -474,6 +659,36 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: FontSize.medium,
     color: Colors.fontColor,
+  },
+  errorCard: {
+    width: '86%',
+    maxHeight: '75%',
+    padding: 20,
+    borderRadius: 16,
+    backgroundColor: '#ffffff',
+  },
+  errorTitle: {
+    color: Colors.buttonColorPrimary,
+    fontSize: FontSize.medium,
+    fontWeight: '700',
+  },
+  errorDetail: {
+    marginTop: 12,
+    fontSize: FontSize.small,
+    color: Colors.fontColor,
+  },
+  errorButton: {
+    alignSelf: 'flex-end',
+    marginTop: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: Colors.buttonColorPrimary,
+  },
+  errorButtonText: {
+    color: '#ffffff',
+    fontSize: FontSize.small,
+    fontWeight: '700',
   },
 });
 
