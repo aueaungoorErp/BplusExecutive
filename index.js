@@ -15,6 +15,7 @@ import logger from 'redux-logger';
 import { thunk } from 'redux-thunk';
 import reducers from './src/reducers';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 //  console.disableYellowBox = true;
 //  console.ignoredYellowBox = ['Warning'];
@@ -24,9 +25,11 @@ const store = createStore(reducers, applyMiddleware(thunk, logger));
 const ReduxApp = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Provider store={store}>
-        <App />
-      </Provider>
+      <SafeAreaProvider>
+        <Provider store={store}>
+          <App />
+        </Provider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 };

@@ -545,8 +545,15 @@ const LoginScreen = () => {
                     <CheckBox
                       value={isSelected}
                       onValueChange={value => setSelection(value)}
+                      boxType="square"
+                      onFillColor={Colors.buttonColorPrimary}
+                      onCheckColor={Colors.buttonTextColor}
+                      onTintColor={Colors.buttonColorPrimary}
+                      tintColor={Colors.fontColor}
+                      onAnimationType="fill"
+                      offAnimationType="fill"
                       tintColors={{
-                        true: Colors.fontColor,
+                        true: Colors.buttonColorPrimary,
                         false: Colors.fontColor,
                       }}
                       style={styles.checkbox}

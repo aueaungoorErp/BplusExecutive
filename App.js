@@ -8,7 +8,6 @@ import {
 } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Button, Text, View, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStateIfMounted } from 'use-state-if-mounted';
 
 import { store, persistor } from './src/store/store';
@@ -118,7 +117,7 @@ const App = () => {
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <NavigationContainer>
-          <SafeAreaView style={{ flex: 1 }}>
+          <View style={{ flex: 1 }}>
             <MainStack.Navigator>
               <MainStack.Screen
                 options={{ headerShown: false }}
@@ -369,7 +368,7 @@ const App = () => {
                 component={IncomeByPos}
               />
             </MainStack.Navigator>
-          </SafeAreaView>
+          </View>
         </NavigationContainer>
       </PersistGate>
     </Provider>

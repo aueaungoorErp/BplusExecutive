@@ -157,7 +157,7 @@ const SkuBalanceByWL = ({ route }) => {
                         arrayResult.push(jsonObj)
                     }
                 } else {
-                    Alert.alert("ไม่พบข้อมูล");
+                    safe_Format.alertNoData();
                 }
                 setLoading(false)
             })

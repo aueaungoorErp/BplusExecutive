@@ -267,6 +267,9 @@ for (const [relativeFilePath, source] of flexiRadioFiles) {
   const filePath = path.join(root, relativeFilePath);
 
   if (!fs.existsSync(filePath)) {
+    fs.mkdirSync(path.dirname(filePath), {recursive: true});
+    fs.writeFileSync(filePath, source);
+    console.log(`Created ${relativeFilePath.replace(/\\/g, '/')}`);
     continue;
   }
 

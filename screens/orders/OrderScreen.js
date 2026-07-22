@@ -150,7 +150,7 @@ const OrderScreen = () => {
                     console.log(responseData.SearchGoodsInfoWPurcPrice)
                     setArrayObj(responseData.SearchGoodsInfoWPurcPrice)
                 } else {
-                    Alert.alert("ไม่พบข้อมูล");
+                    safe_Format.alertNoData();
                 }
                 setLoading(false)
             })

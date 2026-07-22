@@ -126,7 +126,7 @@ const ShowAP = ({ route }) => {
                         arrayResult.push(jsonObj)
                     }
                 } else {
-                    Alert.alert("ไม่พบข้อมูล");
+                    safe_Format.alertNoData();
                 }
             })
             .catch((error) => {

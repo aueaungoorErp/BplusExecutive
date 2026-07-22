@@ -1,6 +1,6 @@
 // Imports: Dependencies
 import {combineReducers} from 'redux';
-import AsyncStorage from '@react-native-community/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // Imports: Reducers
 import loginReducer from './loginReducer';
 import registerReducer from './registerReducer';

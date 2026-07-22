@@ -1,3 +1,5 @@
+import { Alert, InteractionManager, Platform } from 'react-native';
+
 let years = []
 var daily = new Date()
 let yearIndex = daily.getFullYear() + 543
@@ -369,3 +371,15 @@ export const Base64 = {
         return string;
     }
 }
+
+/** iOS: รอ modal/loading ปิดก่อน ไม่งั้น Alert ไม่ขึ้น */
+export const alertNoData = (message = 'ไม่พบข้อมูล') => {
+    const show = () => Alert.alert(message);
+    if (Platform.OS === 'ios') {
+        InteractionManager.runAfterInteractions(() => {
+            setTimeout(show, 350);
+        });
+    } else {
+        show();
+    }
+};

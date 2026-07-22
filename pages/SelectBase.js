@@ -14,10 +14,11 @@ import {
   ScrollView,
   TouchableNativeFeedback,
   TouchableOpacity,
+  Modal,
+  Pressable,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { useStateIfMounted } from 'use-state-if-mounted';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RNRestart from 'react-native-restart';
 
 import { connect } from 'react-redux';
@@ -43,6 +44,7 @@ const CURRENT_BASE_VALUE = '__current_base__';
 const SelectBase = ({ route }) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const {
     container2,
     container1,
@@ -79,6 +81,7 @@ const SelectBase = ({ route }) => {
     secureTextEntry: true,
   });
   const [updateindex, setUpdateindex] = useState(null);
+  const [openPicker, setOpenPicker] = useState(null);
   const image = '../images/UI/Asset35.png';
 
   const getBaseOption = (item, index) => {
@@ -119,9 +122,141 @@ const SelectBase = ({ route }) => {
       ]
     : baseOptions;
   const setlanguageState = itemValue => {
+    setlanguage(itemValue);
     dispatch(loginActions.setLanguage(itemValue));
-    console.log(itemValue);
   };
+
+  const onLanguageChange = itemValue => {
+    if (itemValue === selectlanguage) {
+      return;
+    }
+    Alert.alert(Language.t('menu.changeLanguage'), '', [
+      {
+        text: Language.t('alert.cancel'),
+        style: 'cancel',
+      },
+      {
+        text: Language.t('alert.ok'),
+        onPress: () => setlanguageState(itemValue),
+      },
+    ]);
+  };
+
+  const getBaseDisplayLabel = () => {
+    if (selectbaseValue === '-1') {
+      return Language.t('selectBase.lebel');
+    }
+    if (selectbaseValue === CURRENT_BASE_VALUE && trimmedBaseName) {
+      return trimmedBaseName;
+    }
+    const match = pickerOptions.find(o => o.value === selectbaseValue);
+    return match?.label ?? Language.t('selectBase.lebel');
+  };
+
+  const renderTapPicker = ({
+    pickerId,
+    displayLabel,
+    selectedValue,
+    onValueChange,
+    enabled = true,
+    compact = false,
+    modalTitle,
+    options = [],
+  }) => (
+    <>
+      <TouchableOpacity
+        disabled={!enabled}
+        activeOpacity={0.7}
+        style={[
+          styles.pickerTrigger,
+          compact && styles.pickerTriggerCompact,
+          !enabled && styles.pickerTriggerDisabled,
+        ]}
+        onPress={() => enabled && setOpenPicker(pickerId)}
+      >
+        <Text
+          style={[
+            styles.pickerTriggerText,
+            compact && styles.pickerTriggerTextCompact,
+          ]}
+          numberOfLines={1}
+        >
+          {displayLabel}
+        </Text>
+        <Text
+          style={[
+            styles.pickerChevron,
+            compact && styles.pickerTriggerTextCompact,
+          ]}
+        >
+          ▼
+        </Text>
+      </TouchableOpacity>
+      <Modal
+        visible={openPicker === pickerId}
+        transparent
+        animationType="slide"
+        presentationStyle="overFullScreen"
+        onRequestClose={() => setOpenPicker(null)}
+      >
+        <Pressable
+          style={styles.pickerModalOverlay}
+          onPress={() => setOpenPicker(null)}
+        >
+          <Pressable
+            style={[
+              styles.pickerModalSheet,
+              { paddingBottom: Math.max(insets.bottom, 12) },
+            ]}
+            onPress={e => e.stopPropagation()}
+          >
+            {modalTitle ? (
+              <Text style={styles.pickerModalTitle}>{modalTitle}</Text>
+            ) : null}
+            <ScrollView
+              style={styles.pickerModalList}
+              keyboardShouldPersistTaps="handled"
+            >
+              {options.map(option => {
+                const selected = option.value === selectedValue;
+                return (
+                  <TouchableOpacity
+                    key={String(option.value)}
+                    style={[
+                      styles.pickerModalRow,
+                      selected && styles.pickerModalRowSelected,
+                    ]}
+                    onPress={() => {
+                      setOpenPicker(null);
+                      onValueChange(option.value);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.pickerModalRowText,
+                        selected && styles.pickerModalRowTextSelected,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.pickerModalCancel}
+              onPress={() => setOpenPicker(null)}
+            >
+              <Text style={styles.pickerModalCancelText}>
+                {Language.t('alert.cancel')}
+              </Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
+  );
+
   var a = 0;
 
   const updateSecureTextEntry = () => {
@@ -610,8 +745,18 @@ const SelectBase = ({ route }) => {
         resizeMode="cover"
         style={styles.image}
       >
-        <View style={tabbar}>
-          <View style={{ flexDirection: 'row' }}>
+        <View
+          style={[
+            tabbar,
+            {
+              paddingTop: insets.top + 12,
+              paddingBottom: 12,
+              paddingLeft: Math.max(insets.left, 20),
+              paddingRight: Math.max(insets.right, 16),
+            },
+          ]}
+        >
+          <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Image
                 style={{
@@ -627,37 +772,32 @@ const SelectBase = ({ route }) => {
                 marginLeft: 12,
                 fontSize: FontSize.medium,
                 color: Colors.backgroundLoginColorSecondary,
+                flexShrink: 1,
               }}
             >
-              {' '}
               {Language.t('selectBase.header')}
             </Text>
           </View>
-          <View>
-            <Picker
-              selectedValue={selectlanguage}
-              style={{
-                color: Colors.backgroundLoginColorSecondary,
-                width: 110,
-              }}
-              mode="dropdown"
-              onValueChange={(itemValue, itemIndex) =>
-                Alert.alert('', Language.t('menu.changeLanguage'), [
-                  {
-                    text: Language.t('alert.ok'),
-                    onPress: () => console.log(' setlanguageState(itemValue)'),
-                  },
-                  { text: Language.t('alert.cancel'), onPress: () => {} },
-                ])
-              }
-            >
-              <Picker.Item label="TH" value="th" />
-              <Picker.Item label="EN" value="en" />
-            </Picker>
+          <View style={{ marginLeft: 8 }}>
+            {renderTapPicker({
+            pickerId: 'lang',
+            compact: true,
+            displayLabel: selectlanguage === 'th' ? 'TH' : 'EN',
+            selectedValue: selectlanguage,
+            onValueChange: onLanguageChange,
+            options: [
+              { label: 'TH', value: 'th' },
+              { label: 'EN', value: 'en' },
+            ],
+          })}
           </View>
         </View>
-        <ScrollView>
-          <SafeAreaView>
+        <ScrollView
+          contentContainerStyle={{
+            paddingBottom: Math.max(insets.bottom, 20),
+          }}
+        >
+          <View>
             <KeyboardAvoidingView
               keyboardVerticalOffset={1}
               behavior={'position'}
@@ -668,80 +808,38 @@ const SelectBase = ({ route }) => {
                     {Language.t('selectBase.title')} :
                   </Text>
                 </View>
-                <View
-                  style={{
-                    marginTop: 10,
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    borderColor:
-                      items.length > 0 ? Colors.buttonColorPrimary : '#979797',
-                    backgroundColor: Colors.backgroundColorSecondary,
-                    borderWidth: 1,
-                    padding: 10,
-                    borderRadius: 10,
-                  }}
-                >
-                  <Text style={{ fontSize: FontSize.large }}></Text>
-
-                  {items.length > 0 ? (
-                    <Picker
-                      selectedValue={selectbaseValue}
-                      enabled={true}
-                      mode="dropdown"
-                      style={{
-                        flex: 1,
-                        minWidth: 220,
-                        color: Colors.buttonColorPrimary,
-                        backgroundColor: Colors.backgroundColorSecondary,
-                      }}
-                      dropdownIconColor={Colors.buttonColorPrimary}
-                      onValueChange={(itemValue, itemIndex) =>
-                        _onPressSelectbaseValue(itemValue)
-                      }
-                    >
-                      {pickerOptions.map(option => {
-                        return (
-                          <Picker.Item
-                            key={option.value}
-                            label={option.label}
-                            color={Colors.buttonColorPrimary}
-                            value={option.value}
-                          />
-                        );
-                      })}
-                      {
-                        <Picker.Item
-                          value="-1"
-                          color={Colors.buttonColorPrimary}
-                          label={Language.t('selectBase.lebel')}
-                        />
-                      }
-                    </Picker>
-                  ) : (
-                    <Picker
-                      selectedValue={selectbaseValue}
-                      state={{
-                        color: Colors.buttonColorPrimary,
-                        backgroundColor: Colors.borderColor,
-                      }}
-                      style={{ flex: 1, minWidth: 220 }}
-                      dropdownIconColor={Colors.buttonColorPrimary}
-                      onValueChange={(itemValue, itemIndex) =>
-                        _onPressSelectbaseValue(itemValue)
-                      }
-                      enabled={false}
-                      mode="dropdown"
-                    >
-                      {
-                        <Picker.Item
-                          value="-1"
-                          color={Colors.buttonColorPrimary}
-                          label={Language.t('selectBase.lebel')}
-                        />
-                      }
-                    </Picker>
-                  )}
-                </View>
+                {items.length > 0
+                  ? renderTapPicker({
+                      pickerId: 'base',
+                      displayLabel: getBaseDisplayLabel(),
+                      selectedValue: selectbaseValue,
+                      modalTitle: Language.t('selectBase.title'),
+                      onValueChange: itemValue =>
+                        _onPressSelectbaseValue(itemValue),
+                      options: [
+                        ...pickerOptions.map(option => ({
+                          label: option.label,
+                          value: option.value,
+                        })),
+                        {
+                          label: Language.t('selectBase.lebel'),
+                          value: '-1',
+                        },
+                      ],
+                    })
+                  : renderTapPicker({
+                      pickerId: 'base',
+                      enabled: false,
+                      displayLabel: Language.t('selectBase.lebel'),
+                      selectedValue: '-1',
+                      onValueChange: () => {},
+                      options: [
+                        {
+                          label: Language.t('selectBase.lebel'),
+                          value: '-1',
+                        },
+                      ],
+                    })}
                 <View style={{ marginTop: 10 }}>
                   <Text style={styles.textTitle}>
                     {Language.t('selectBase.name')} :
@@ -1052,7 +1150,7 @@ const SelectBase = ({ route }) => {
                 </View>
               </View>
             </KeyboardAvoidingView>
-          </SafeAreaView>
+          </View>
         </ScrollView>
 
         {loading && (
@@ -1108,14 +1206,100 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   tabbar: {
-    height: 70,
-    padding: 12,
-    paddingLeft: 20,
+    minHeight: 48,
     alignItems: 'center',
     backgroundColor: '#223fc9',
-
     justifyContent: 'space-between',
     flexDirection: 'row',
+  },
+  pickerTrigger: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: Colors.buttonColorPrimary,
+    backgroundColor: Colors.backgroundColorSecondary,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    height: 50,
+  },
+  pickerTriggerCompact: {
+    marginTop: 0,
+    height: 36,
+    minWidth: 88,
+    paddingHorizontal: 12,
+    borderColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  pickerTriggerDisabled: {
+    borderColor: '#979797',
+    opacity: 0.7,
+  },
+  pickerTriggerText: {
+    flex: 1,
+    fontSize: FontSize.medium,
+    color: Colors.buttonColorPrimary,
+    marginRight: 8,
+  },
+  pickerTriggerTextCompact: {
+    flex: 0,
+    color: Colors.backgroundLoginColorSecondary,
+    fontSize: FontSize.medium,
+    fontWeight: 'bold',
+  },
+  pickerChevron: {
+    fontSize: 10,
+    color: Colors.buttonColorPrimary,
+  },
+  pickerModalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  pickerModalSheet: {
+    backgroundColor: Colors.backgroundColorSecondary,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  pickerModalTitle: {
+    textAlign: 'center',
+    fontSize: FontSize.medium,
+    fontWeight: 'bold',
+    color: Colors.fontColor,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.borderColor,
+  },
+  pickerModalList: {
+    maxHeight: 320,
+  },
+  pickerModalRow: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.borderColor,
+  },
+  pickerModalRowSelected: {
+    backgroundColor: Colors.backgroundColor,
+  },
+  pickerModalRowText: {
+    fontSize: FontSize.medium,
+    color: Colors.fontColor,
+  },
+  pickerModalRowTextSelected: {
+    color: Colors.buttonColorPrimary,
+    fontWeight: 'bold',
+  },
+  pickerModalCancel: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.borderColor,
+  },
+  pickerModalCancelText: {
+    fontSize: FontSize.medium,
+    color: Colors.fontColorSecondary,
   },
   image: {
     flex: 1,
