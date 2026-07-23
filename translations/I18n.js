@@ -10,18 +10,15 @@ I18n.fallbacks = true;
 // Define the supported translations
 I18n.translations = {
   en,
-  th,
+  th
 };
-
 const currentLocale = I18n.currentLocale();
 
 // Is it a RTL language?
-export const isRTL =
-  currentLocale.indexOf('he') === 0 || currentLocale.indexOf('ar') === 0;
+export const isRTL = currentLocale.indexOf('he') === 0 || currentLocale.indexOf('ar') === 0;
 
 // Allow RTL alignment in RTL languages
 React.I18nManager.allowRTL(isRTL);
-console.log(currentLocale);
 // Localizing momentjs to Hebrew or English
 if (currentLocale.indexOf('th') === 0) {
   // moment.locale('th')
@@ -30,17 +27,16 @@ if (currentLocale.indexOf('th') === 0) {
   // moment.locale('en')
   I18n.locale = 'en';
 }
-
 export function changeLanguage(language) {
   return I18n.locale = language;
 }
 
 // The method we'll use instead of a regular string
 export const Language = {
-  t: (name) => {
+  t: name => {
     return I18n.t(name);
   },
   getLang: () => {
     return I18n.locale;
-  },
+  }
 };

@@ -250,6 +250,8 @@
     "doPrint": "Do you want to print the document",
     "YorN": "yes or no?",
     "printing": "printing order",
+    "loadingData": "Loading data",
+    "orderingPrint": "Printing",
     "cancelled": "The print order was cancelled.",
     "error": "Publishing has encountered an error.",
     "Successful": "Successful document creation"

@@ -279,3 +279,92 @@ for (const [relativeFilePath, source] of flexiRadioFiles) {
     console.log(`Patched ${relativeFilePath.replace(/\\/g, '/')}`);
   }
 }
+
+const patchTextInFile = (relativeFilePath, search, replacement) => {
+  const filePath = path.join(root, relativeFilePath);
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+  const content = fs.readFileSync(filePath, 'utf8');
+  if (!content.includes(search)) {
+    return;
+  }
+  fs.writeFileSync(filePath, content.replace(search, replacement));
+  console.log(`Patched ${relativeFilePath.replace(/\\/g, '/')}`);
+};
+
+patchTextInFile(
+  'node_modules/use-state-if-mounted/useIsComponentMounted.js',
+  `    return function () {
+      return isMounted.current = false;
+    };`,
+  `    return function () {
+      isMounted.current = false;
+    };`,
+);
+
+const wavedphBackHandlerOld = `  useEffect(() => {
+    BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () =>
+      BackHandler.removeEventListener('hardwareBackPress', backAction);
+  }, [backAction]);`;
+
+const wavedphBackHandlerNew = `  useEffect(() => {
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => subscription.remove();
+  }, [backAction]);`;
+
+for (const relativeFilePath of [
+  'node_modules/@wavedph/react-native-picker-with-modal/src/Picker/index.tsx',
+  'node_modules/@wavedph/react-native-picker-with-modal/lib/module/Picker/index.js',
+  'node_modules/@wavedph/react-native-picker-with-modal/lib/commonjs/Picker/index.js',
+]) {
+  patchTextInFile(relativeFilePath, wavedphBackHandlerOld, wavedphBackHandlerNew);
+  patchTextInFile(
+    relativeFilePath,
+    `  useEffect(() => {
+    BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => BackHandler.removeEventListener('hardwareBackPress', backAction);
+  }, [backAction]);`,
+    `  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => subscription.remove();
+  }, [backAction]);`,
+  );
+  patchTextInFile(
+    relativeFilePath,
+    `  (0, _react.useEffect)(() => {
+    _reactNative.BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => _reactNative.BackHandler.removeEventListener('hardwareBackPress', backAction);
+  }, [backAction]);`,
+    `  (0, _react.useEffect)(() => {
+    const subscription = _reactNative.BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => subscription.remove();
+  }, [backAction]);`,
+  );
+}
+
+const thDatepickerCalendar =
+  'node_modules/@blacksakura013/th-datepicker/react-native-datepicker-th/components/CalendarScreen.tsx';
+
+patchTextInFile(
+  thDatepickerCalendar,
+  `    const [modalVisible, setModalVisible] = useState(false);
+    console.log(\`\${monthIndex} , \${yearIndex}\`)
+    useEffect(() => {`,
+  `    const [modalVisible, setModalVisible] = useState(false);
+    useEffect(() => {`,
+);
+
+patchTextInFile(
+  thDatepickerCalendar,
+  `        let data = Calendars.getFulldate(dateIndex, monthIndex, yearIndex)
+        data = data.split('-')
+        props.onChange(new Date(\`\${data[1]}/\${data[0]}/\${data[2]}\`))`,
+  `        props.onChange(new Date(Number(yearIndex), Number(monthIndex), Number(dateIndex)))`,
+);
