@@ -18,6 +18,12 @@ import { fontSize, right } from 'styled-system';
 import * as safe_Format from '../../../src/safe_Format';
 const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
+/** Label + date picker on one row inside the search modal sheet. */
+const DATE_LABEL_WIDTH = 40;
+const DATE_PICKER_WIDTH = Math.max(
+  160,
+  deviceWidth - 32 - 20 - 20 - DATE_LABEL_WIDTH - 4,
+);
 import tableStyles from '../tableStyles';
 
 const incomeCalendarModel = {
@@ -118,7 +124,7 @@ const ShowInCome = ({
       icon: incomeCalendarIcon,
       fontSize: FontSize.medium,
       fontColor: Colors.fontColor,
-      width: 250,
+      width: DATE_PICKER_WIDTH,
       borderRadius: 10,
     }),
     [],
@@ -377,7 +383,9 @@ const ShowInCome = ({
                                         <View style={{
                     backgroundColor: Colors.fontColor2,
                     borderRadius: 20,
-                    padding: 10
+                    padding: 10,
+                    width: '100%',
+                    overflow: 'hidden',
                   }}>
                                             <View style={{
                       paddingBottom: 10
@@ -444,40 +452,25 @@ const ShowInCome = ({
                                                     </RadioButton>
                                                 </RadioGroup>
                                             </View>
-                                            <View style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: 10
-                    }}>
-                                                <Text style={{
-                        fontSize: FontSize.medium,
-                        marginRight: 5,
-                        color: 'black',
-                        fontWeight: 'bold'
-                      }}>ตั้งแต่</Text>
-                                                <CalendarScreen
-                                                  value={start_date}
-                                                  onChange={onChangeStartDate}
-                                                  {...calendarScreenProps}
-                                                />
+                                            <View style={styles.dateFieldRow}>
+                                                <Text style={styles.dateFieldLabel}>ตั้งแต่</Text>
+                                                <View style={styles.dateFieldPicker}>
+                                                  <CalendarScreen
+                                                    value={start_date}
+                                                    onChange={onChangeStartDate}
+                                                    {...calendarScreenProps}
+                                                  />
+                                                </View>
                                             </View>
-                                            <View style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: 10
-                    }}>
-                                                <Text style={{
-                        fontSize: FontSize.medium,
-                        color: 'black',
-                        fontWeight: 'bold'
-                      }}>ถึง</Text>
-                                                <CalendarScreen
-                                                  value={end_date}
-                                                  onChange={onChangeEndDate}
-                                                  {...calendarScreenProps}
-                                                />
+                                            <View style={styles.dateFieldRow}>
+                                                <Text style={[styles.dateFieldLabel, styles.dateFieldLabelLeft]}>ถึง</Text>
+                                                <View style={styles.dateFieldPicker}>
+                                                  <CalendarScreen
+                                                    value={end_date}
+                                                    onChange={onChangeEndDate}
+                                                    {...calendarScreenProps}
+                                                  />
+                                                </View>
                                             </View>
                                             <Pressable style={[styles.button, styles.buttonClose]} onPress={() => InCome()}>
                                                 <Text style={styles.textStyle}>ตกลง</Text>
@@ -632,12 +625,36 @@ const styles = StyleSheet.create({
     zIndex: 1001,
     elevation: 1001
   },
+  dateFieldRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  dateFieldLabel: {
+    width: DATE_LABEL_WIDTH,
+    fontSize: FontSize.medium,
+    color: 'black',
+    fontWeight: 'bold',
+    marginRight: 2,
+    textAlign: 'right',
+  },
+  dateFieldLabelLeft: {
+    textAlign: 'left',
+  },
+  dateFieldPicker: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: 0,
+    alignItems: 'flex-start',
+  },
   modalView: {
     backgroundColor: Colors.backgroundLoginColor,
     borderRadius: 20,
     padding: 10,
-    width: "auto",
-    shadowColor: "#000"
+    width: '100%',
+    overflow: 'hidden',
+    shadowColor: '#000',
   },
   button: {
     borderRadius: 20,
