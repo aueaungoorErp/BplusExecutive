@@ -184,6 +184,47 @@ let styles = StyleSheet.create({
 })
 `;
 
+const qrScanReaderSource = `#import "QRScanReader.h"
+#import <AVFoundation/AVFoundation.h>
+#import <CoreImage/CoreImage.h>
+
+@implementation QRScanReader
+RCT_EXPORT_MODULE();
+
+RCT_EXPORT_METHOD(readerQR:(NSString *)fileUrl
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject)
+{
+  dispatch_async(dispatch_get_main_queue(), ^{
+    NSString *result = [self readerQR:fileUrl];
+    if (result) {
+      resolve(result);
+    } else {
+      reject(@"not_found", @"No related QR code", nil);
+    }
+  });
+}
+
+-(NSString*)readerQR:(NSString*)fileUrl{
+  fileUrl = [fileUrl stringByReplacingOccurrencesOfString:@"file://" withString:@""];
+
+  CIContext *context = [CIContext contextWithOptions:nil];
+
+  CIDetector *detector = [CIDetector detectorOfType:CIDetectorTypeQRCode context:context options:@{CIDetectorAccuracy:CIDetectorAccuracyHigh}];
+  NSData *fileData = [[NSData alloc] initWithContentsOfFile:fileUrl];
+  CIImage *ciImage = [CIImage imageWithData:fileData];
+  NSArray *features = [detector featuresInImage:ciImage];
+  if(!features || features.count==0){
+    return nil;
+  }
+  CIQRCodeFeature *feature = [features objectAtIndex:0];
+  NSString *scannedResult = feature.messageString;
+  return scannedResult;
+}
+
+@end
+`;
+
 const replacements = [
   [/^\s*jcenter\(\)\r?\n/gm, ''],
   [/\bcompile\s+(['"])/g, 'implementation $1'],
@@ -280,16 +321,29 @@ for (const [relativeFilePath, source] of flexiRadioFiles) {
   }
 }
 
+const qrScanReaderPath =
+  'node_modules/react-native-qr-decode-image-camera/ios/QrCode/QRScanReader.m';
+const qrScanReaderFilePath = path.join(root, qrScanReaderPath);
+if (fs.existsSync(qrScanReaderFilePath)) {
+  const currentQrScanReader = fs.readFileSync(qrScanReaderFilePath, 'utf8');
+  if (currentQrScanReader !== qrScanReaderSource) {
+    fs.writeFileSync(qrScanReaderFilePath, qrScanReaderSource);
+    console.log(`Patched ${qrScanReaderPath}`);
+  }
+}
+
 const patchTextInFile = (relativeFilePath, search, replacement) => {
   const filePath = path.join(root, relativeFilePath);
   if (!fs.existsSync(filePath)) {
     return;
   }
   const content = fs.readFileSync(filePath, 'utf8');
-  if (!content.includes(search)) {
+  const normalized = content.replace(/\r\n/g, '\n');
+  if (!normalized.includes(search)) {
     return;
   }
-  fs.writeFileSync(filePath, content.replace(search, replacement));
+  const patched = normalized.replace(search, replacement);
+  fs.writeFileSync(filePath, patched);
   console.log(`Patched ${relativeFilePath.replace(/\\/g, '/')}`);
 };
 
@@ -367,4 +421,46 @@ patchTextInFile(
         data = data.split('-')
         props.onChange(new Date(\`\${data[1]}/\${data[0]}/\${data[2]}\`))`,
   `        props.onChange(new Date(Number(yearIndex), Number(monthIndex), Number(dateIndex)))`,
+);
+
+patchTextInFile(
+  thDatepickerCalendar,
+  `    useEffect(() => {
+
+        set_showDate(Calendars.setDateFormat(props.format && (props.format), props.era && (props.era), velLanguage, temp_dateIndex, temp_monthIndex, temp_yearIndex))
+        setvelLanguage(props.language ? props.language : RNLocalize.getLocales().languageCode)
+        if (props.value)
+            if (typeof (props.value) == 'object') {
+                let newDate = props.value
+                if (newDate.toString().toUpperCase() != 'INVALID DATE') {
+                    set_DateIndex(newDate.getDate())
+                    set_MonthIndex(newDate.getMonth())
+                    set_yearIndex(newDate.getFullYear())
+                }
+            }
+            else if (typeof (props.value) == 'string') {
+                let tempDate = props.value
+                if (tempDate.search('-')) {
+                    tempDate = tempDate.split('-')
+                }
+                else if (tempDate.search('/')) {
+                    tempDate = tempDate.split('/')
+                }
+                let newDate = new Date('')
+                if (newDate.toString().toUpperCase() != 'INVALID DATE') {
+                    set_DateIndex(newDate.getDate())
+                    set_MonthIndex(newDate.getMonth())
+                    set_yearIndex(newDate.getFullYear())
+                }
+            }
+        //backsakura013
+    }, [props]);
+    useEffect(() => {`,
+  `    useEffect(() => {`,
+);
+
+patchTextInFile(
+  thDatepickerCalendar,
+  `    }, [props.value])`,
+  `    }, [props.value, props.format, props.era, props.language])`,
 );

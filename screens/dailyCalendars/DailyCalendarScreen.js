@@ -435,7 +435,7 @@ const DailyCalendarScreen = () => {
                   <View>
                     <Text style={{
                   fontWeight: 'bold',
-                  fontSize: FontSize.large,
+                  fontSize: FontSize.medium,
                   color: Colors.fontColor
                 }}>
                       {safe_Format.months_th[monthIndex]}

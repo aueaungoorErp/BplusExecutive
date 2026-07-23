@@ -7,11 +7,11 @@ import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { FontSize } from './FontSizeHelper';
 import Colors from '../src/Colors';
 
-export const PICKER_CONTROL_HEIGHT = Platform.OS === 'android' ? 42 : 40;
+export const PICKER_CONTROL_HEIGHT = 36;
 export const PICKER_BOX_PADDING_V = 3;
 export const PICKER_BOX_MIN_HEIGHT =
   PICKER_CONTROL_HEIGHT + PICKER_BOX_PADDING_V * 2;
-export const PICKER_LABEL_FONT_SIZE = FontSize.large;
+export const PICKER_LABEL_FONT_SIZE = FontSize.medium;
 export const PICKER_HALF_BOX = { flex: 1, minWidth: 0 };
 export const PICKER_DROPDOWN_ICON_WIDTH = 28;
 export const PICKER_SURFACE_WHITE = '#FFFFFF';
@@ -115,7 +115,7 @@ const DropdownPickerField = ({
       >
         <FontAwesomeIcon
           icon={faChevronDown}
-          size={17}
+          size={14}
           color={chevronColor}
         />
       </View>

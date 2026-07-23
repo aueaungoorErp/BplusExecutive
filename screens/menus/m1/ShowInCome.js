@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Dimensions, Text, View, Image, Button, TextInput, KeyboardAvoidingView, ActivityIndicator, Alert, Platform, BackHandler, StatusBar, TouchableOpacity, Modal, Pressable } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { StyleSheet, Dimensions, Text, View, Image, Button, TextInput, KeyboardAvoidingView, ActivityIndicator, Alert, Platform, BackHandler, StatusBar, TouchableOpacity, Pressable } from 'react-native';
 import CalendarScreen from '@blacksakura013/th-datepicker';
 import CheckBox from '@react-native-community/checkbox';
 import { RadioGroup, RadioButton } from 'react-native-flexi-radio-button';
@@ -19,6 +19,21 @@ import * as safe_Format from '../../../src/safe_Format';
 const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 import tableStyles from '../tableStyles';
+
+const incomeCalendarModel = {
+  backgroundColor: Colors.backgroundColor,
+  buttonSuccess: {
+    backgroundColor: Colors.itemColor,
+  },
+  pickItem: {
+    color: Colors.itemColor,
+  },
+};
+
+const incomeCalendarIcon = {
+  color: Colors.primaryColor,
+};
+
 const ShowInCome = ({
   route
 }) => {
@@ -90,6 +105,24 @@ const ShowInCome = ({
     setSum(newsum);
   }, [arrayObj]);
   const normalizePickerDate = value => safe_Format.checkDate(value);
+
+  const calendarScreenProps = useMemo(
+    () => ({
+      language: 'th',
+      era: 'be',
+      format: 'DD/MM/YYYY',
+      borderColor: Colors.primaryColor,
+      linkTodateColor: Colors.itemColor,
+      calendarModel: incomeCalendarModel,
+      borderWidth: 1,
+      icon: incomeCalendarIcon,
+      fontSize: FontSize.medium,
+      fontColor: Colors.fontColor,
+      width: 250,
+      borderRadius: 10,
+    }),
+    [],
+  );
 
   const onChangeStartDate = vel => {
     const nextStart = normalizePickerDate(vel);
@@ -187,8 +220,8 @@ const ShowInCome = ({
     const Radio_Obj = safe_Format.Radio_menu(index, val);
     setRadioIndex1(Radio_Obj.index);
     if (val != null) {
-      setS_date(new Date(Radio_Obj.sdate));
-      setE_date(new Date(Radio_Obj.edate));
+      setS_date(normalizePickerDate(Radio_Obj.sdate));
+      setE_date(normalizePickerDate(Radio_Obj.edate));
     }
     setRadioIndex2(2);
     setRadioIndex3(2);
@@ -197,8 +230,8 @@ const ShowInCome = ({
     const Radio_Obj = safe_Format.Radio_menu(index, val);
     setRadioIndex2(Radio_Obj.index);
     if (val != null) {
-      setS_date(new Date(Radio_Obj.sdate));
-      setE_date(new Date(Radio_Obj.edate));
+      setS_date(normalizePickerDate(Radio_Obj.sdate));
+      setE_date(normalizePickerDate(Radio_Obj.edate));
     }
     setRadioIndex1(2);
     setRadioIndex3(2);
@@ -207,8 +240,8 @@ const ShowInCome = ({
     const Radio_Obj = safe_Format.Radio_menu(index, val);
     setRadioIndex3(Radio_Obj.index);
     if (val != null) {
-      setS_date(new Date(Radio_Obj.sdate));
-      setE_date(new Date(Radio_Obj.edate));
+      setS_date(normalizePickerDate(Radio_Obj.sdate));
+      setE_date(normalizePickerDate(Radio_Obj.edate));
     }
     setRadioIndex1(2);
     setRadioIndex2(2);
@@ -315,14 +348,17 @@ const ShowInCome = ({
                             </View>
                         </ScrollView>
                     </View>
+                </View>
+            </SafeAreaView>
 
-                    <View style={styles.centeredView}>
-                        <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => {
-            setModalVisible(!modalVisible);
-          }}>
-                            <TouchableOpacity onPress={() => setModalVisible(!modalVisible)} style={styles.centeredView}>
-                                <View>
-                                    <View style={styles.modalView}>
+            {modalVisible ? (
+              <View style={styles.dateModalBackdrop} pointerEvents="box-none">
+                <Pressable
+                  style={styles.dateModalBackdropPress}
+                  onPress={() => setModalVisible(false)}
+                />
+                <View style={styles.dateModalSheet}>
+                  <View style={styles.modalView}>
                                         <View style={{
                     justifyContent: 'space-between',
                     flexDirection: 'row'
@@ -331,7 +367,7 @@ const ShowInCome = ({
                                             <Text style={styles.modalText}>เลือกการค้นหา</Text>
                                             <Pressable style={{
                       alignItems: 'flex-end'
-                    }} onPress={() => setModalVisible(!modalVisible)}>
+                    }} onPress={() => setModalVisible(false)}>
                                                 <Image style={{
                         width: FontSize.large,
                         height: FontSize.large
@@ -420,17 +456,11 @@ const ShowInCome = ({
                         color: 'black',
                         fontWeight: 'bold'
                       }}>ตั้งแต่</Text>
-                                                <CalendarScreen value={start_date} onChange={onChangeStartDate} language={'th'} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
-                        backgroundColor: Colors.backgroundColor,
-                        buttonSuccess: {
-                          backgroundColor: Colors.itemColor
-                        },
-                        pickItem: {
-                          color: Colors.itemColor
-                        }
-                      }} borderWidth={1} icon={{
-                        color: Colors.primaryColor
-                      }} fontSize={FontSize.medium} fontColor={Colors.fontColor} width={250} borderRadius={10} />
+                                                <CalendarScreen
+                                                  value={start_date}
+                                                  onChange={onChangeStartDate}
+                                                  {...calendarScreenProps}
+                                                />
                                             </View>
                                             <View style={{
                       flexDirection: 'row',
@@ -443,30 +473,20 @@ const ShowInCome = ({
                         color: 'black',
                         fontWeight: 'bold'
                       }}>ถึง</Text>
-                                                <CalendarScreen value={end_date} onChange={onChangeEndDate} language={'th'} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
-                        backgroundColor: Colors.backgroundColor,
-                        buttonSuccess: {
-                          backgroundColor: Colors.itemColor
-                        },
-                        pickItem: {
-                          color: Colors.itemColor
-                        }
-                      }} borderWidth={1} icon={{
-                        color: Colors.primaryColor
-                      }} fontSize={FontSize.medium} fontColor={Colors.fontColor} width={250} borderRadius={10} />
+                                                <CalendarScreen
+                                                  value={end_date}
+                                                  onChange={onChangeEndDate}
+                                                  {...calendarScreenProps}
+                                                />
                                             </View>
                                             <Pressable style={[styles.button, styles.buttonClose]} onPress={() => InCome()}>
                                                 <Text style={styles.textStyle}>ตกลง</Text>
                                             </Pressable>
                                         </View>
                                     </View>
-                                </View>
-                            </TouchableOpacity>
-                        </Modal>
-
-                    </View>
                 </View>
-            </SafeAreaView>
+              </View>
+            ) : null}
 
             {loading && <View style={{
       width: deviceWidth,
@@ -589,6 +609,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: deviceWidth
+  },
+  dateModalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: deviceWidth,
+    height: deviceHeight,
+    zIndex: 1000,
+    elevation: 1000,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    paddingHorizontal: 16,
+  },
+  dateModalBackdropPress: {
+    ...StyleSheet.absoluteFillObject
+  },
+  dateModalSheet: {
+    width: '100%',
+    maxWidth: deviceWidth - 32,
+    zIndex: 1001,
+    elevation: 1001
   },
   modalView: {
     backgroundColor: Colors.backgroundLoginColor,
