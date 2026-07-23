@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, Dimensions, Text, View, Image, Button, TextInput, KeyboardAvoidingView, ActivityIndicator, Alert, Platform, BackHandler, StatusBar, TouchableOpacity, Pressable } from 'react-native';
 import CalendarScreen from '@blacksakura013/th-datepicker';
 import CheckBox from '@react-native-community/checkbox';
@@ -20,9 +20,13 @@ const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 /** Label + date picker on one row inside the search modal sheet. */
 const DATE_LABEL_WIDTH = 40;
-const DATE_PICKER_WIDTH = Math.max(
-  160,
-  deviceWidth - 32 - 20 - 20 - DATE_LABEL_WIDTH - 8,
+const DATE_LABEL_GAP = 32;
+/** modal sheet inset + modalView/inner box horizontal padding */
+const DATE_ROW_HORIZONTAL_INSET =
+  32 + 10 + 10 + 10 + 10;
+const DATE_PICKER_WIDTH_INITIAL = Math.max(
+  120,
+  deviceWidth - DATE_ROW_HORIZONTAL_INSET - DATE_LABEL_WIDTH - DATE_LABEL_GAP,
 );
 import tableStyles from '../tableStyles';
 
@@ -112,6 +116,17 @@ const ShowInCome = ({
   }, [arrayObj]);
   const normalizePickerDate = value => safe_Format.checkDate(value);
 
+  const [datePickerWidth, setDatePickerWidth] = useState(
+    DATE_PICKER_WIDTH_INITIAL,
+  );
+
+  const onDatePickerLayout = useCallback(event => {
+    const nextWidth = Math.floor(event.nativeEvent.layout.width);
+    if (nextWidth > 0) {
+      setDatePickerWidth(prev => (prev === nextWidth ? prev : nextWidth));
+    }
+  }, []);
+
   const calendarScreenProps = useMemo(
     () => ({
       language: 'th',
@@ -124,10 +139,10 @@ const ShowInCome = ({
       icon: incomeCalendarIcon,
       fontSize: FontSize.medium,
       fontColor: Colors.fontColor,
-      width: DATE_PICKER_WIDTH,
+      width: datePickerWidth,
       borderRadius: 10,
     }),
-    [],
+    [datePickerWidth],
   );
 
   const onChangeStartDate = vel => {
@@ -454,7 +469,10 @@ const ShowInCome = ({
                                             </View>
                                             <View style={styles.dateFieldRow}>
                                                 <Text style={styles.dateFieldLabel}>ตั้งแต่</Text>
-                                                <View style={styles.dateFieldPicker}>
+                                                <View
+                                                  style={styles.dateFieldPicker}
+                                                  onLayout={onDatePickerLayout}
+                                                >
                                                   <CalendarScreen
                                                     value={start_date}
                                                     onChange={onChangeStartDate}
@@ -636,7 +654,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.medium,
     color: 'black',
     fontWeight: 'bold',
-    marginRight: 8,
+    marginRight: DATE_LABEL_GAP,
     textAlign: 'right',
   },
   dateFieldLabelLeft: {
@@ -645,8 +663,6 @@ const styles = StyleSheet.create({
   dateFieldPicker: {
     flex: 1,
     minWidth: 0,
-    marginLeft: 0,
-    alignItems: 'flex-start',
   },
   modalView: {
     backgroundColor: Colors.backgroundLoginColor,
