@@ -22,7 +22,7 @@ const deviceHeight = Dimensions.get('window').height;
 const DATE_LABEL_WIDTH = 40;
 const DATE_PICKER_WIDTH = Math.max(
   160,
-  deviceWidth - 32 - 20 - 20 - DATE_LABEL_WIDTH - 4,
+  deviceWidth - 32 - 20 - 20 - DATE_LABEL_WIDTH - 8,
 );
 import tableStyles from '../tableStyles';
 
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.medium,
     color: 'black',
     fontWeight: 'bold',
-    marginRight: 2,
+    marginRight: 8,
     textAlign: 'right',
   },
   dateFieldLabelLeft: {
