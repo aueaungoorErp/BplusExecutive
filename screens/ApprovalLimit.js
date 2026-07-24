@@ -108,7 +108,7 @@ const ApprovalLimit = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>ยอดขายตามปีเดือน</Text>
+                    }}>{Language.t('executiveMenus.approvalLimit.salesByYearMonth')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -145,7 +145,7 @@ const ApprovalLimit = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>ยอดขายตามทีมขาย</Text>
+                    }}>{Language.t('executiveMenus.approvalLimit.salesByTeam')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -164,7 +164,7 @@ const ApprovalLimit = () => {
                     fontSize: FontSize.medium,
                     fontWeight: 'bold'
                   }}>
-                                                {'ย้อนกลับ'}
+                                                {Language.t('executiveMenus.back')}
                                             </Text>
                                         </View>
                                     </TouchableNativeFeedback>

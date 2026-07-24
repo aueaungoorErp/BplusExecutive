@@ -52,16 +52,16 @@ const AR_ShowArdetail = ({
   const [radioIndex2, setRadioIndex2] = useState(4);
   const [radioIndex3, setRadioIndex3] = useState(4);
   const radio_props = [{
-    label: 'สิ้นเดือนก่อน',
+    label: Language.t('report.filter.endOfLastMonth'),
     value: 'lastAmonth'
   }, {
-    label: 'สิ้นปีก่อน',
+    label: Language.t('report.filter.endOfLastYear'),
     value: 'lastAyear'
   }, {
-    label: 'เมื่อวาน',
+    label: Language.t('report.filter.yesterday'),
     value: 'lastday'
   }, {
-    label: 'วันนี้',
+    label: Language.t('report.filter.today'),
     value: 'nowday'
   }, {
     label: null,
@@ -202,7 +202,7 @@ const AR_ShowArdetail = ({
             marginLeft: 12,
             fontSize: FontSize.medium,
             color: 'black'
-          }}>{`แสดงยอดขายแต่ละเดือน`}</Text>
+          }}>{Language.t('executiveMenus.m2.monthlySales')}</Text>
                     </View>
                     <View>
                         <TouchableOpacity onPress={() => setModalVisible(true)}>
@@ -226,12 +226,12 @@ const AR_ShowArdetail = ({
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>วันที่</Text></View>
+                  }}>{Language.t('report.date')}</Text></View>
                                     <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>เอกสาร</Text></View>
+                  }}>{Language.t('report.document')}</Text></View>
 
                                     <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                     fontSize: FontSize.medium,
@@ -242,12 +242,12 @@ const AR_ShowArdetail = ({
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>ชำระแล้ว </Text></View>
+                  }}>{Language.t('report.paid')} </Text></View>
                                     <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>คงค้าง </Text></View>
+                  }}>{Language.t('report.outstanding')} </Text></View>
 
                                 </View>
                                 <ScrollView>
@@ -296,7 +296,7 @@ const AR_ShowArdetail = ({
                       fontSize: FontSize.medium,
                       color: Colors.fontColor2,
                       alignSelf: 'flex-start'
-                    }}>รวม</Text></View>
+                    }}>{Language.t('report.total')}</Text></View>
                                             <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}>
                                                 <Text style={{
                       fontSize: FontSize.medium,
@@ -340,7 +340,7 @@ const AR_ShowArdetail = ({
                     flexDirection: 'row'
                   }}>
                                             <View width={20}></View>
-                                            <Text style={styles.modalText}>เลือกการค้นหา</Text>
+                                            <Text style={styles.modalText}>{Language.t('report.selectSearch')}</Text>
                                             <Pressable style={{
                       alignItems: 'flex-end'
                     }} onPress={() => setModalVisible(!modalVisible)}>
@@ -410,8 +410,8 @@ const AR_ShowArdetail = ({
                         marginRight: 5,
                         color: 'black',
                         fontWeight: 'bold'
-                      }}>ตั้งแต่</Text>
-                                                <CalendarScreen value={start_date} onChange={vel => setS_date(vel)} language={'th'} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
+                      }}>{Language.t('report.from')}</Text>
+                                                <CalendarScreen value={start_date} onChange={vel => setS_date(vel)} language={Language.getLang()} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
                         backgroundColor: Colors.backgroundColor,
                         buttonSuccess: {
                           backgroundColor: Colors.itemColor
@@ -424,7 +424,7 @@ const AR_ShowArdetail = ({
                       }} fontSize={FontSize.medium} fontColor={Colors.fontColor} width={250} borderRadius={10} />
                                             </View>
                                             <Pressable style={[styles.button, styles.buttonClose]} onPress={() => InCome()}>
-                                                <Text style={styles.textStyle}>ตกลง</Text>
+                                                <Text style={styles.textStyle}>{Language.t('alert.ok')}</Text>
                                             </Pressable>
 
                                         </View>

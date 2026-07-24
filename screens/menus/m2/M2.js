@@ -78,7 +78,7 @@ const M2 = () => {
                                     <TouchableOpacity onPress={() => navigation.navigate('ShowAR', {
                 nav: 'ShowAR',
                 routeName: 'AR_SellAmount',
-                title: 'แสดงยอดขายแต่ละเดือน'
+                title: Language.t('executiveMenus.m2.monthlySales')
               })}>
                                         <View style={{
                   backgroundColor: Colors.backgroundLoginColorSecondary,
@@ -112,14 +112,14 @@ const M2 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>แสดงยอดขายแต่ละเดือน</Text>
+                    }}>{Language.t('executiveMenus.m2.monthlySales')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
                                     <TouchableOpacity onPress={() => navigation.navigate('ShowAR', {
                 nav: 'ShowAR',
                 routeName: 'AR_ShowArdetail',
-                title: 'แสดงยอดหนี้คงค้าง'
+                title: Language.t('executiveMenus.m2.outstandingDebt')
               })}>
                                         <View style={{
                   backgroundColor: Colors.backgroundLoginColorSecondary,
@@ -153,14 +153,14 @@ const M2 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>แสดงยอดหนี้คงค้าง</Text>
+                    }}>{Language.t('executiveMenus.m2.outstandingDebt')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
                                     <TouchableOpacity onPress={() => navigation.navigate('ShowAR', {
                 nav: 'ShowAR',
                 routeName: 'AR_SellAmountByIcDept',
-                title: 'แสดงยอดขายตามหมวดสินค้า'
+                title: Language.t('executiveMenus.m2.salesByCategory')
               })}>
                                         <View style={{
                   backgroundColor: Colors.backgroundLoginColorSecondary,
@@ -194,7 +194,7 @@ const M2 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>แสดงยอดขายตามหมวดสินค้า</Text>
+                    }}>{Language.t('executiveMenus.m2.salesByCategory')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -232,14 +232,14 @@ const M2 = () => {
                                                     alignSelf: 'center',
                                                     fontSize: FontSize.medium,
                                                     fontWeight: 'bold'
-                                                }}>แสดงสินค้าจองค้างส่ง</Text>
+                                                }}>{Language.t('executiveMenus.m2.goodsBooking')}</Text>
                                             </View>
                                         </View>
                                      </TouchableOpacity> */}
                                     <TouchableOpacity onPress={() => navigation.navigate('ShowAR', {
                 nav: 'ShowAR',
                 routeName: 'AR_Address',
-                title: 'แสดงที่อยู่'
+                title: Language.t('executiveMenus.m2.showAddress')
               })}>
                                         <View style={{
                   backgroundColor: Colors.backgroundLoginColorSecondary,
@@ -273,7 +273,7 @@ const M2 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>แสดงที่อยู่</Text>
+                    }}>{Language.t('executiveMenus.m2.showAddress')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -292,7 +292,7 @@ const M2 = () => {
                     fontSize: FontSize.medium,
                     fontWeight: 'bold'
                   }}>
-                                                {'ย้อนกลับ'}
+                                                {Language.t('executiveMenus.back')}
                                             </Text>
                                         </View>
                                     </TouchableNativeFeedback>

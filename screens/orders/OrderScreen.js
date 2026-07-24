@@ -262,7 +262,7 @@ const OrderScreen = () => {
                 fontSize: FontSize.medium,
                 fontWeight: 'bold'
               }}>
-                                        {'ย้อนกลับ'}
+                                        {Language.t('executiveMenus.back')}
                                     </Text>
                                 </View>
                             </TouchableNativeFeedback>

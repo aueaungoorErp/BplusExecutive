@@ -51,16 +51,16 @@ const AP_Address = ({
   const [radioIndex2, setRadioIndex2] = useState(4);
   const [radioIndex3, setRadioIndex3] = useState(4);
   const radio_props = [{
-    label: 'สิ้นเดือนก่อน',
+    label: Language.t('report.filter.endOfLastMonth'),
     value: 'lastAmonth'
   }, {
-    label: 'สิ้นปีก่อน',
+    label: Language.t('report.filter.endOfLastYear'),
     value: 'lastAyear'
   }, {
-    label: 'เมื่อวาน',
+    label: Language.t('report.filter.yesterday'),
     value: 'lastday'
   }, {
-    label: 'วันนี้',
+    label: Language.t('report.filter.today'),
     value: 'nowday'
   }, {
     label: null,
@@ -179,7 +179,7 @@ const AP_Address = ({
             marginLeft: 12,
             fontSize: FontSize.medium,
             color: Colors.fontColor2
-          }}>{`แสดงที่อยู่`}</Text>
+          }}>{Language.t('executiveMenus.m3.showAddress')}</Text>
                     </View>
                     <View>
                     </View>
@@ -197,63 +197,63 @@ const AP_Address = ({
               FontSize: FontSize.large,
               color: 'black',
               fontWeight: 'bold'
-            }}>รหัส : {arrayObj[0].code}</Text>
+            }}>{Language.t('report.addressFields.code')} : {arrayObj[0].code}</Text>
                             </View>
                             <View padding={10}>
                                 <Text style={{
               FontSize: FontSize.medium,
               color: 'black',
               fontWeight: 'bold'
-            }}>ชื่อ : {arrayObj[0].name}</Text>
+            }}>{Language.t('report.addressFields.name')} : {arrayObj[0].name}</Text>
                             </View>
                             <View padding={10}>
                                 <Text style={{
               FontSize: FontSize.medium,
               color: 'black',
               fontWeight: 'bold'
-            }}>ที่อยู่ : {arrayObj[0].addb_addb_1} {arrayObj[0].addb_addb_2} {arrayObj[0].addb_addb_3}</Text>
+            }}>{Language.t('report.addressFields.address')} : {arrayObj[0].addb_addb_1} {arrayObj[0].addb_addb_2} {arrayObj[0].addb_addb_3}</Text>
                             </View>
                             <View padding={10}>
                                 <Text style={{
               FontSize: FontSize.medium,
               color: 'black',
               fontWeight: 'bold'
-            }}>แขวง-ตำบล :  {arrayObj[0].addb_sub_district}</Text>
+            }}>{Language.t('report.addressFields.subdistrict')} :  {arrayObj[0].addb_sub_district}</Text>
                             </View>
                             <View padding={10}>
                                 <Text style={{
               FontSize: FontSize.medium,
               color: 'black',
               fontWeight: 'bold'
-            }}>เขต-อำเภอ :  {arrayObj[0].addb_district}</Text>
+            }}>{Language.t('report.addressFields.district')} :  {arrayObj[0].addb_district}</Text>
                             </View>
                             <View padding={10}>
                                 <Text style={{
               FontSize: FontSize.medium,
               color: 'black',
               fontWeight: 'bold'
-            }}>จังหวัด :  {arrayObj[0].addb_province}</Text>
+            }}>{Language.t('report.addressFields.province')} :  {arrayObj[0].addb_province}</Text>
                             </View>
                             <View padding={10}>
                                 <Text style={{
               FontSize: FontSize.medium,
               color: 'black',
               fontWeight: 'bold'
-            }}>ไปรษณีย์ : {arrayObj[0].addb_post}</Text>
+            }}>{Language.t('report.addressFields.postcode')} : {arrayObj[0].addb_post}</Text>
                             </View>
                             <View padding={10}>
                                 <Text style={{
               FontSize: FontSize.medium,
               color: 'black',
               fontWeight: 'bold'
-            }}>ประเทศ : {arrayObj[0].addb_country}</Text>
+            }}>{Language.t('report.addressFields.country')} : {arrayObj[0].addb_country}</Text>
                             </View>
                             <View padding={10}>
                                 <Text style={{
               FontSize: FontSize.medium,
               color: 'black',
               fontWeight: 'bold'
-            }}>โทร : (+{arrayObj[0].addb_cntry_code}) {arrayObj[0].addb_phone}</Text>
+            }}>{Language.t('report.addressFields.phone')} : (+{arrayObj[0].addb_cntry_code}) {arrayObj[0].addb_phone}</Text>
                             </View>
                             <View padding={10}>
                                 <Text style={{
@@ -267,21 +267,21 @@ const AP_Address = ({
               FontSize: FontSize.medium,
               color: 'black',
               fontWeight: 'bold'
-            }}>ชื่ออื่นๆ : {arrayObj[0].arcat_name}</Text>
+            }}>{Language.t('report.addressFields.alias')} : {arrayObj[0].arcat_name}</Text>
                             </View>
                             <View padding={10}>
                                 <Text style={{
               FontSize: FontSize.medium,
               color: 'black',
               fontWeight: 'bold'
-            }}>สาขา : {arrayObj[0].addb_branch}</Text>
+            }}>{Language.t('report.addressFields.branch')} : {arrayObj[0].addb_branch}</Text>
                             </View>
                             <View padding={10}>
                                 <Text style={{
               FontSize: FontSize.medium,
               color: 'black',
               fontWeight: 'bold'
-            }}>เลขผู้เสียภาษี : {arrayObj[0].addb_tax_id}</Text>
+            }}>{Language.t('report.addressFields.taxId')} : {arrayObj[0].addb_tax_id}</Text>
                             </View>
                         </View> : null}
 

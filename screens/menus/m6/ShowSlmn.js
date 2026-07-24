@@ -124,7 +124,7 @@ const ShowSlmn = ({
             marginLeft: 12,
             fontSize: FontSize.medium,
             color: 'black'
-          }}>{`ติดตามยอดขาย`}</Text>
+          }}>{Language.t('executiveMenus.ereport.salesTracking')}</Text>
                     </View>
 
 
@@ -174,12 +174,12 @@ const ShowSlmn = ({
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>ชื่อพนักงาน</Text></View>
+                  }}>{Language.t('report.employeeName')}</Text></View>
                                     <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>รหัส</Text></View>
+                  }}>{Language.t('report.code')}</Text></View>
 
                                 </View>
                                 <ScrollView>
@@ -214,7 +214,7 @@ const ShowSlmn = ({
                       fontSize: FontSize.medium,
                       color: Colors.fontColor2,
                       alignSelf: 'center'
-                    }}>รวม</Text></View>
+                    }}>{Language.t('report.total')}</Text></View>
                                             <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                       fontSize: FontSize.medium,
                       color: Colors.fontColor2,

@@ -124,7 +124,7 @@ const ShowAP = ({
             marginLeft: 12,
             fontSize: FontSize.medium,
             color: 'black'
-          }}>{`ยอดเจ้าหนี้แต่ละราย`}</Text>
+          }}>{Language.t('executiveMenus.ereport.apEach')}</Text>
                     </View>
                 </View>
                 <View style={tabbar}>
@@ -170,12 +170,12 @@ const ShowAP = ({
                   fontSize: FontSize.medium,
                   color: Colors.fontColor2,
                   alignSelf: 'center'
-                }}>ชื่อเจ้าหนี้</Text></View>
+                }}>{Language.t('report.apName')}</Text></View>
                                 <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                   fontSize: FontSize.medium,
                   color: Colors.fontColor2,
                   alignSelf: 'center'
-                }}>เบอร์โทร</Text></View>
+                }}>{Language.t('report.phone')}</Text></View>
 
                             </View>
                             <ScrollView>

@@ -15,6 +15,7 @@ import {
   ACTION_SET_IP_ADDRESS,
   ACTION_SET_FINGERPRINT,
   ACTION_SET_SCREEN,
+  ACTION_SET_LANGUAGE,
   SERVICE_ID,
   USERNAME_SERVICE,
   PASSWORD_SERVICE,
@@ -39,7 +40,8 @@ const initialState = {
   index: '-1',
   ipAddress: [],
   isFingerprint: false,
-  isScreen: ''
+  isScreen: '',
+  language: 'th',
 }
 
 const loginReducer = (state = initialState, { type, payload }) => {
@@ -76,6 +78,8 @@ const loginReducer = (state = initialState, { type, payload }) => {
       return { ...state, isFingerprint: payload }
     case ACTION_SET_SCREEN:
       return { ...state, isScreen: payload }
+    case ACTION_SET_LANGUAGE:
+      return { ...state, language: payload }
     default:
       return state;
   }

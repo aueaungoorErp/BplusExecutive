@@ -111,7 +111,7 @@ const M6 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>สรุปยอดขายตามพนักงานขาย</Text>
+                    }}>{Language.t('executiveMenus.m6.salesBySlmn')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -149,7 +149,7 @@ const M6 = () => {
                                                     alignSelf: 'center',
                                                     fontSize: FontSize.medium,
                                                     fontWeight: 'bold'
-                                                }}>สรุปยอดขายตามเครื่องบันทึกเงินสด</Text>
+                                                }}>{Language.t('executiveMenus.m6.salesByPos')}</Text>
                                             </View>
                                         </View>
                                      </TouchableOpacity> */}
@@ -187,7 +187,7 @@ const M6 = () => {
                                                     alignSelf: 'center',
                                                     fontSize: FontSize.medium,
                                                     fontWeight: 'bold'
-                                                }}>แสดงยอดพนักงานขายแต่ละเดือน</Text>
+                                                }}>{Language.t('executiveMenus.m6.slmnMonthly')}</Text>
                                             </View>
                                         </View>
                                      </TouchableOpacity>
@@ -225,7 +225,7 @@ const M6 = () => {
                                                     alignSelf: 'center',
                                                     fontSize: FontSize.medium,
                                                     fontWeight: 'bold'
-                                                }}>แสดงยอดเครื่องบันทึกเงินสดแต่ละเดือน</Text>
+                                                }}>{Language.t('executiveMenus.m6.posMonthly')}</Text>
                                             </View>
                                         </View>
                                      </TouchableOpacity> */}
@@ -245,7 +245,7 @@ const M6 = () => {
                     fontSize: FontSize.medium,
                     fontWeight: 'bold'
                   }}>
-                                                {'ย้อนกลับ'}
+                                                {Language.t('executiveMenus.back')}
                                             </Text>
                                         </View>
                                     </TouchableNativeFeedback>

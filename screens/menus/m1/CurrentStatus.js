@@ -53,16 +53,16 @@ const CurrentStatus = ({
   const [radioIndex2, setRadioIndex2] = useState(4);
   const [radioIndex3, setRadioIndex3] = useState(4);
   const radio_props = [{
-    label: 'สิ้นเดือนก่อน',
+    label: Language.t('report.filter.endOfLastMonth'),
     value: 'lastAmonth'
   }, {
-    label: 'สิ้นปีก่อน',
+    label: Language.t('report.filter.endOfLastYear'),
     value: 'lastAyear'
   }, {
-    label: 'เมื่อวาน',
+    label: Language.t('report.filter.yesterday'),
     value: 'lastday'
   }, {
-    label: 'วันนี้',
+    label: Language.t('report.filter.today'),
     value: 'nowday'
   }, {
     label: null,
@@ -210,7 +210,7 @@ const CurrentStatus = ({
             marginLeft: 12,
             fontSize: FontSize.medium,
             color: 'black'
-          }}>{`สรุปสถานภาพปัจจุบัน`}</Text>
+          }}>{Language.t('executiveMenus.m1.currentStatus')}</Text>
                     </View>
                     <View>
                         <TouchableOpacity onPress={() => setModalVisible(true)}>
@@ -230,17 +230,17 @@ const CurrentStatus = ({
                 fontSize: FontSize.medium,
                 color: Colors.fontColor2,
                 alignSelf: 'center'
-              }}>รายละเอียด</Text></View>
+              }}>{Language.t('report.detail')}</Text></View>
                             <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                 fontSize: FontSize.medium,
                 color: Colors.fontColor2,
                 alignSelf: 'center'
-              }}>เดือนก่อน</Text></View>
+              }}>{Language.t('report.lastMonth')}</Text></View>
                             <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                 fontSize: FontSize.medium,
                 color: Colors.fontColor2,
                 alignSelf: 'center'
-              }}>ปีก่อน</Text></View>
+              }}>{Language.t('report.lastYear')}</Text></View>
                             <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                 fontSize: FontSize.medium,
                 color: Colors.fontColor2,
@@ -287,7 +287,7 @@ const CurrentStatus = ({
                   fontSize: FontSize.medium,
                   color: Colors.fontColor2,
                   alignSelf: 'flex-start'
-                }}>รวม</Text></View>
+                }}>{Language.t('report.total')}</Text></View>
                                     <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                   fontSize: FontSize.medium,
                   color: Colors.fontColor2,
@@ -322,7 +322,7 @@ const CurrentStatus = ({
                   flexDirection: 'row'
                 }}>
                                         <View width={20}></View>
-                                        <Text style={styles.modalText}>เลือกการค้นหา</Text>
+                                        <Text style={styles.modalText}>{Language.t('report.selectSearch')}</Text>
                                         <Pressable style={{
                     alignItems: 'flex-end'
                   }} onPress={() => setModalVisible(!modalVisible)}>
@@ -393,8 +393,8 @@ const CurrentStatus = ({
                       marginRight: 5,
                       color: 'black',
                       fontWeight: 'bold'
-                    }}>ตั้งแต่</Text>
-                                            <CalendarScreen value={start_date} onChange={vel => setS_date(vel)} language={'th'} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
+                    }}>{Language.t('report.from')}</Text>
+                                            <CalendarScreen value={start_date} onChange={vel => setS_date(vel)} language={Language.getLang()} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
                       backgroundColor: Colors.backgroundColor,
                       buttonSuccess: {
                         backgroundColor: Colors.itemColor
@@ -408,7 +408,7 @@ const CurrentStatus = ({
                                         </View>
 
                                         <Pressable style={[styles.button, styles.buttonClose]} onPress={() => InCome()}>
-                                            <Text style={styles.textStyle}>ตกลง</Text>
+                                            <Text style={styles.textStyle}>{Language.t('alert.ok')}</Text>
                                         </Pressable>
                                     </View>
                                 </View>

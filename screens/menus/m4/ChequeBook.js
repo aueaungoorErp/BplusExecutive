@@ -52,16 +52,16 @@ const ChequeBook = ({
   const [radioIndex2, setRadioIndex2] = useState(4);
   const [radioIndex3, setRadioIndex3] = useState(4);
   const radio_props = [{
-    label: 'สิ้นเดือนก่อน',
+    label: Language.t('report.filter.endOfLastMonth'),
     value: 'lastAmonth'
   }, {
-    label: 'สิ้นปีก่อน',
+    label: Language.t('report.filter.endOfLastYear'),
     value: 'lastAyear'
   }, {
-    label: 'เมื่อวาน',
+    label: Language.t('report.filter.yesterday'),
     value: 'lastday'
   }, {
-    label: 'วันนี้',
+    label: Language.t('report.filter.today'),
     value: 'nowday'
   }, {
     label: null,
@@ -190,7 +190,7 @@ const ChequeBook = ({
             marginLeft: 12,
             fontSize: FontSize.medium,
             color: 'black'
-          }}>{`ยอดเช็คจ่ายครบแต่ละเดือน`}</Text>
+          }}>{Language.t('executiveMenus.m4.chequePaid')}</Text>
                     </View>
                     <View>
                         <TouchableOpacity onPress={() => setModalVisible(true)}>
@@ -212,17 +212,17 @@ const ChequeBook = ({
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>ปี</Text></View>
+                  }}>{Language.t('report.year')}</Text></View>
                                     <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>เดือน</Text></View>
+                  }}>{Language.t('report.month')}</Text></View>
                                     <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>ยอดเช็ค </Text></View>
+                  }}>{Language.t('report.chequeAmount')} </Text></View>
 
                                 </View>
                                 <ScrollView>
@@ -261,7 +261,7 @@ const ChequeBook = ({
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>รวม</Text>
+                  }}>{Language.t('report.total')}</Text>
                                         </View>
                                         <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}>
                                             <Text style={{
@@ -290,7 +290,7 @@ const ChequeBook = ({
                     flexDirection: 'row'
                   }}>
                                             <View width={20}></View>
-                                            <Text style={styles.modalText}>เลือกการค้นหา</Text>
+                                            <Text style={styles.modalText}>{Language.t('report.selectSearch')}</Text>
                                             <Pressable style={{
                       alignItems: 'flex-end'
                     }} onPress={() => setModalVisible(!modalVisible)}>
@@ -360,8 +360,8 @@ const ChequeBook = ({
                         marginRight: 5,
                         color: 'black',
                         fontWeight: 'bold'
-                      }}>ตั้งแต่</Text>
-                                                <CalendarScreen value={start_date} onChange={vel => setS_date(vel)} language={'th'} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
+                      }}>{Language.t('report.from')}</Text>
+                                                <CalendarScreen value={start_date} onChange={vel => setS_date(vel)} language={Language.getLang()} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
                         backgroundColor: Colors.backgroundColor,
                         buttonSuccess: {
                           backgroundColor: Colors.itemColor
@@ -374,7 +374,7 @@ const ChequeBook = ({
                       }} fontSize={FontSize.medium} fontColor={Colors.fontColor} width={250} borderRadius={10} />
                                             </View>
                                             <Pressable style={[styles.button, styles.buttonClose]} onPress={() => InCome()}>
-                                                <Text style={styles.textStyle}>ตกลง</Text>
+                                                <Text style={styles.textStyle}>{Language.t('alert.ok')}</Text>
                                             </Pressable>
 
                                         </View>

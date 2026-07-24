@@ -19,8 +19,8 @@ import * as safe_Format from '../../../src/safe_Format';
 const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 /** Label + date picker on one row inside the search modal sheet. */
-const DATE_LABEL_WIDTH = 40;
-const DATE_LABEL_GAP = 32;
+const DATE_LABEL_WIDTH = 72;
+const DATE_LABEL_GAP = 24;
 /** modal sheet inset + modalView/inner box horizontal padding */
 const DATE_ROW_HORIZONTAL_INSET =
   32 + 10 + 10 + 10 + 10;
@@ -77,22 +77,22 @@ const ShowInCome = ({
   const [radioIndex2, setRadioIndex2] = useState(6);
   const [radioIndex3, setRadioIndex3] = useState(6);
   const radio_props = [{
-    label: 'ปีก่อน',
+    label: Language.t('report.filter.lastYearPeriod'),
     value: 'lastyear'
   }, {
-    label: 'ปีนี้',
+    label: Language.t('report.filter.thisYear'),
     value: 'nowyear'
   }, {
-    label: 'เดือนนี้',
+    label: Language.t('report.filter.thisMonth'),
     value: 'nowmonth'
   }, {
-    label: 'เดือนก่อน',
+    label: Language.t('report.filter.previousMonth'),
     value: 'lastmonth'
   }, {
-    label: 'เมื่อวาน',
+    label: Language.t('report.filter.yesterday'),
     value: 'lastday'
   }, {
-    label: 'วันนี้',
+    label: Language.t('report.filter.today'),
     value: 'nowday'
   }, {
     label: null,
@@ -174,7 +174,7 @@ const ShowInCome = ({
     if (fromDate.getTime() > toDate.getTime()) {
       Alert.alert(
         Language.t('alert.errorTitle'),
-        'วันที่ตั้งแต่ต้องไม่มากกว่าวันที่ถึง',
+        Language.t('report.dateRangeInvalid'),
         [{ text: Language.t('alert.ok') }],
       );
       return;
@@ -284,7 +284,7 @@ const ShowInCome = ({
             marginLeft: 12,
             fontSize: FontSize.medium,
             color: 'black'
-          }}>{`ยอดขายตามปีเดือน`}</Text>
+          }}>{Language.t('executiveMenus.m1.showIncome')}</Text>
                     </View>
                     <View>
                         <TouchableOpacity onPress={() => setModalVisible(true)}>
@@ -306,17 +306,17 @@ const ShowInCome = ({
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}> ปี</Text></View>
+                  }}> {Language.t('report.year')}</Text></View>
                                     <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>เดือน</Text></View>
+                  }}>{Language.t('report.month')}</Text></View>
                                     <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}> ยอดขาย </Text></View>
+                  }}> {Language.t('report.sales')} </Text></View>
                                 </View>
                                 <ScrollView>
                                     <KeyboardAvoidingView keyboardVerticalOffset={1}>
@@ -350,7 +350,7 @@ const ShowInCome = ({
                       fontSize: FontSize.medium,
                       color: Colors.fontColor2,
                       alignSelf: 'flex-start'
-                    }}>รวม</Text></View>
+                    }}>{Language.t('report.total')}</Text></View>
 
                                         <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                       fontSize: FontSize.medium,
@@ -385,7 +385,7 @@ const ShowInCome = ({
                     flexDirection: 'row'
                   }}>
                                             <View width={20}></View>
-                                            <Text style={styles.modalText}>เลือกการค้นหา</Text>
+                                            <Text style={styles.modalText}>{Language.t('report.selectSearch')}</Text>
                                             <Pressable style={{
                       alignItems: 'flex-end'
                     }} onPress={() => setModalVisible(false)}>
@@ -468,7 +468,7 @@ const ShowInCome = ({
                                                 </RadioGroup>
                                             </View>
                                             <View style={styles.dateFieldRow}>
-                                                <Text style={styles.dateFieldLabel}>ตั้งแต่</Text>
+                                                <Text style={styles.dateFieldLabel} numberOfLines={1}>{Language.t('report.from')}</Text>
                                                 <View
                                                   style={styles.dateFieldPicker}
                                                   onLayout={onDatePickerLayout}
@@ -481,7 +481,7 @@ const ShowInCome = ({
                                                 </View>
                                             </View>
                                             <View style={styles.dateFieldRow}>
-                                                <Text style={[styles.dateFieldLabel, styles.dateFieldLabelLeft]}>ถึง</Text>
+                                                <Text style={styles.dateFieldLabel} numberOfLines={1}>{Language.t('report.to')}</Text>
                                                 <View style={styles.dateFieldPicker}>
                                                   <CalendarScreen
                                                     value={end_date}
@@ -491,7 +491,7 @@ const ShowInCome = ({
                                                 </View>
                                             </View>
                                             <Pressable style={[styles.button, styles.buttonClose]} onPress={() => InCome()}>
-                                                <Text style={styles.textStyle}>ตกลง</Text>
+                                                <Text style={styles.textStyle}>{Language.t('alert.ok')}</Text>
                                             </Pressable>
                                         </View>
                                     </View>
@@ -651,13 +651,11 @@ const styles = StyleSheet.create({
   },
   dateFieldLabel: {
     width: DATE_LABEL_WIDTH,
+    flexShrink: 0,
     fontSize: FontSize.medium,
     color: 'black',
     fontWeight: 'bold',
     marginRight: DATE_LABEL_GAP,
-    textAlign: 'right',
-  },
-  dateFieldLabelLeft: {
     textAlign: 'left',
   },
   dateFieldPicker: {

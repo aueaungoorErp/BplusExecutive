@@ -391,7 +391,7 @@ const ReportScreen = ({
                         <View style={{
                     marginTop: 10
                   }}>
-                          <CalendarScreen value={start_date} onChange={vel => setS_date(vel)} language={'th'} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.backgroundColorSecondary} linkTodateColor={Colors.itemColor} calendarModel={{
+                          <CalendarScreen value={start_date} onChange={vel => setS_date(vel)} language={Language.getLang()} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.backgroundColorSecondary} linkTodateColor={Colors.itemColor} calendarModel={{
                       backgroundColor: Colors.backgroundColor,
                       buttonSuccess: {
                         backgroundColor: Colors.itemColor
@@ -412,7 +412,7 @@ const ReportScreen = ({
                         <View style={{
                     marginTop: 10
                   }}>
-                          <CalendarScreen value={start_date} onChange={vel => setS_date(vel)} language={'th'} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.backgroundColorSecondary} linkTodateColor={Colors.itemColor} calendarModel={{
+                          <CalendarScreen value={start_date} onChange={vel => setS_date(vel)} language={Language.getLang()} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.backgroundColorSecondary} linkTodateColor={Colors.itemColor} calendarModel={{
                       backgroundColor: Colors.backgroundColor,
                       buttonSuccess: {
                         backgroundColor: Colors.itemColor
@@ -433,7 +433,7 @@ const ReportScreen = ({
                     marginTop: 10,
                     marginBottom: 10
                   }}>
-                          <CalendarScreen value={end_date} onChange={vel => setE_date(vel)} language={'th'} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.backgroundColorSecondary} linkTodateColor={Colors.itemColor} calendarModel={{
+                          <CalendarScreen value={end_date} onChange={vel => setE_date(vel)} language={Language.getLang()} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.backgroundColorSecondary} linkTodateColor={Colors.itemColor} calendarModel={{
                       backgroundColor: Colors.backgroundColor,
                       buttonSuccess: {
                         backgroundColor: Colors.itemColor

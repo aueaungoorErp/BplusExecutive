@@ -81,22 +81,22 @@ const OrderInformation = ({
   const [end_date, setE_date] = useState(new Date());
   const image = '../../images/UI/Asset35.png';
   const radio_props = [{
-    label: 'ปีก่อน',
+    label: Language.t('report.filter.lastYearPeriod'),
     value: 'lastyear'
   }, {
-    label: 'ปีนี้',
+    label: Language.t('report.filter.thisYear'),
     value: 'nowyear'
   }, {
-    label: 'เดือนนี้',
+    label: Language.t('report.filter.thisMonth'),
     value: 'nowmonth'
   }, {
-    label: 'เดือนก่อน',
+    label: Language.t('report.filter.previousMonth'),
     value: 'lastmonth'
   }, {
-    label: 'เมื่อวาน',
+    label: Language.t('report.filter.yesterday'),
     value: 'lastday'
   }, {
-    label: 'วันนี้',
+    label: Language.t('report.filter.today'),
     value: 'nowday'
   }, {
     label: null,
@@ -178,7 +178,7 @@ const OrderInformation = ({
     const fromDate = normalizePickerDate(start_date);
     const toDate = normalizePickerDate(end_date);
     if (fromDate.getTime() > toDate.getTime()) {
-      Alert.alert(Language.t('alert.errorTitle'), 'วันที่ตั้งแต่ต้องไม่มากกว่าวันที่ถึง', [{
+      Alert.alert(Language.t('alert.errorTitle'), Language.t('report.dateRangeInvalid'), [{
         text: Language.t('alert.ok')
       }]);
       return;
@@ -1776,7 +1776,7 @@ const OrderInformation = ({
               fontSize: FontSize.medium,
               fontWeight: 'bold'
             }}>
-                  {'ย้อนกลับ'}
+                  {Language.t('executiveMenus.back')}
                 </Text>
               </View>
             </TouchableNativeFeedback>
@@ -1820,7 +1820,7 @@ const OrderInformation = ({
             flexDirection: 'row'
           }}>
                 <View width={20} />
-                <Text style={styles.modalText}>เลือกการค้นหา</Text>
+                <Text style={styles.modalText}>{Language.t('report.selectSearch')}</Text>
                 <Pressable style={{
               alignItems: 'flex-end'
             }} onPress={() => setModalVisible(false)}>
@@ -1914,8 +1914,8 @@ const OrderInformation = ({
                   </RadioGroup>
                 </View>
                 <View style={styles.dateFieldBlock}>
-                  <Text style={styles.dateFieldLabel}>ตั้งแต่</Text>
-                  <CalendarScreen value={start_date} onChange={onChangeStartDate} language={'th'} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
+                  <Text style={styles.dateFieldLabel}>{Language.t('report.from')}</Text>
+                  <CalendarScreen value={start_date} onChange={onChangeStartDate} language={Language.getLang()} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
                 backgroundColor: Colors.backgroundColor,
                 buttonSuccess: {
                   backgroundColor: Colors.itemColor
@@ -1928,8 +1928,8 @@ const OrderInformation = ({
               }} fontSize={FontSize.medium} fontColor={Colors.fontColor} width={DATE_PICKER_WIDTH} borderRadius={10} />
                 </View>
                 <View style={styles.dateFieldBlock}>
-                  <Text style={styles.dateFieldLabel}>ถึง</Text>
-                  <CalendarScreen value={end_date} onChange={onChangeEndDate} language={'th'} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
+                  <Text style={styles.dateFieldLabel}>{Language.t('report.to')}</Text>
+                  <CalendarScreen value={end_date} onChange={onChangeEndDate} language={Language.getLang()} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
                 backgroundColor: Colors.backgroundColor,
                 buttonSuccess: {
                   backgroundColor: Colors.itemColor
@@ -1942,7 +1942,7 @@ const OrderInformation = ({
               }} fontSize={FontSize.medium} fontColor={Colors.fontColor} width={DATE_PICKER_WIDTH} borderRadius={10} />
                 </View>
                 <Pressable style={[styles.button, styles.buttonClose]} onPress={() => SInCome()}>
-                  <Text style={styles.textStyle}>ตกลง</Text>
+                  <Text style={styles.textStyle}>{Language.t('alert.ok')}</Text>
                 </Pressable>
               </View>
             </View>

@@ -108,7 +108,7 @@ const M1 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>ยอดขายตามปีเดือน</Text>
+                    }}>{Language.t('executiveMenus.m1.showIncome')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -145,7 +145,7 @@ const M1 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>ยอดขายตามทีมขาย</Text>
+                    }}>{Language.t('executiveMenus.m1.showIncomeTeam')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -182,7 +182,7 @@ const M1 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>ยอดเงินในธนาคาร</Text>
+                    }}>{Language.t('executiveMenus.m1.showBank')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -225,7 +225,7 @@ const M1 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>แสดงยอดขายรายวัน</Text>
+                    }}>{Language.t('executiveMenus.m1.showDailySales')}</Text>
                                                 
                                             </View>
                                         </View>
@@ -263,7 +263,7 @@ const M1 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>แสดงยอดรับจ่ายรายวัน</Text>
+                    }}>{Language.t('executiveMenus.m1.showDailyPayment')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -300,7 +300,7 @@ const M1 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>สรุปสถานภาพปัจจุบัน</Text>
+                    }}>{Language.t('executiveMenus.m1.currentStatus')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -318,7 +318,7 @@ const M1 = () => {
                     fontSize: FontSize.medium,
                     fontWeight: 'bold'
                   }}>
-                                                {'ย้อนกลับ'}
+                                                {Language.t('executiveMenus.back')}
                                             </Text>
                                         </View>
                                     </TouchableNativeFeedback>

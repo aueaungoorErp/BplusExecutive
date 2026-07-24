@@ -111,7 +111,7 @@ const M4 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>ยอดเช็ครับครบแต่ละเดือน</Text>
+                    }}>{Language.t('executiveMenus.m4.chequeReceived')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -151,7 +151,7 @@ const M4 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>ยอดเช็คจ่ายครบแต่ละเดือน</Text>
+                    }}>{Language.t('executiveMenus.m4.chequePaid')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -189,7 +189,7 @@ const M4 = () => {
                                                     alignSelf: 'center',
                                                     fontSize: FontSize.medium,
                                                     fontWeight: 'bold'
-                                                }}>ยอดสินค้าคงเหลือตามหมวด</Text>
+                                                }}>{Language.t('executiveMenus.m4.stockByCategory')}</Text>
                                             </View>
                                         </View>
                                      </TouchableOpacity>
@@ -227,7 +227,7 @@ const M4 = () => {
                                                     alignSelf: 'center',
                                                     fontSize: FontSize.medium,
                                                     fontWeight: 'bold'
-                                                }}>ยอดสินค้าคงเหลือตามตำแหน่งเก็บ</Text>
+                                                }}>{Language.t('executiveMenus.m4.stockByLocation')}</Text>
                                             </View>
                                         </View>
                                      </TouchableOpacity> */}
@@ -246,7 +246,7 @@ const M4 = () => {
                     fontSize: FontSize.medium,
                     fontWeight: 'bold'
                   }}>
-                                                {'ย้อนกลับ'}
+                                                {Language.t('executiveMenus.back')}
                                             </Text>
                                         </View>
                                     </TouchableNativeFeedback>

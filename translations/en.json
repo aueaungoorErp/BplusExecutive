@@ -226,6 +226,74 @@
     "next": "Next",
     "select": " Please Select"
   },
+  "dailyCalendar": {
+    "selectYear": "Select year",
+    "selectMonth": "Select month",
+    "dayDetail": "Day details"
+  },
+  "executiveMenus": {
+    "back": "Back",
+    "main": {
+      "executiveReport": "Executive reports",
+      "report": "Reports",
+      "approveDocument": "Approve documents",
+      "approveLimit": "Approve credit limit",
+      "purchaseInquiry": "Purchase inquiry",
+      "dailyCalendar": "Daily calendar"
+    },
+    "ereport": {
+      "faq": "Frequently asked questions",
+      "arEach": "Accounts receivable by customer",
+      "apEach": "Accounts payable by vendor",
+      "chequeSummary": "Bank cheque summary",
+      "arApSummary": "AR/AP summary",
+      "salesTracking": "Sales tracking"
+    },
+    "m1": {
+      "showIncome": "Sales by year/month",
+      "showIncomeTeam": "Sales by sales team",
+      "showBank": "Bank balances",
+      "showDailySales": "Daily sales",
+      "showDailyPayment": "Daily receipts/payments",
+      "currentStatus": "Current status summary"
+    },
+    "m2": {
+      "monthlySales": "Monthly sales",
+      "outstandingDebt": "Outstanding receivables",
+      "salesByCategory": "Sales by product category",
+      "goodsBooking": "Pending delivery bookings",
+      "showAddress": "Show address"
+    },
+    "m3": {
+      "monthlyPurchase": "Monthly purchases",
+      "outstandingPayable": "Outstanding payables",
+      "purchaseByCategory": "Purchases by product category",
+      "pendingPurchase": "Pending purchase orders",
+      "showAddress": "Show address"
+    },
+    "m4": {
+      "chequeReceived": "Cheques received by month",
+      "chequePaid": "Cheques paid by month",
+      "stockByCategory": "Stock balance by category",
+      "stockByLocation": "Stock balance by location"
+    },
+    "m5": {
+      "arDueByYearMonth": "AR due by year/month",
+      "arByType": "AR by customer type",
+      "apDueByYearMonth": "AP due by year/month",
+      "apByType": "AP by vendor type"
+    },
+    "m6": {
+      "salesBySlmn": "Sales by salesperson",
+      "salesByPos": "Sales by POS terminal",
+      "slmnMonthly": "Salesperson monthly totals",
+      "posMonthly": "POS monthly totals"
+    },
+    "approvalLimit": {
+      "salesByYearMonth": "Sales by year/month",
+      "salesByTeam": "Sales by sales team"
+    }
+  },
   "error_ser": {
     "607": "Machine Over Limit",
     "608": "Un Register Machine",
@@ -254,6 +322,62 @@
     "orderingPrint": "Printing",
     "cancelled": "The print order was cancelled.",
     "error": "Publishing has encountered an error.",
-    "Successful": "Successful document creation"
+    "Successful": "Successful document creation",
+    "total": "Total",
+    "year": "Year",
+    "month": "Month",
+    "code": "Code",
+    "name": "Name",
+    "date": "Date",
+    "document": "Document",
+    "debt": "Debt",
+    "paid": "Paid",
+    "outstanding": "Outstanding",
+    "balance": "Balance",
+    "sales": "Sales",
+    "purchase": "Purchase",
+    "booking": "Booking",
+    "accountName": "Account name",
+    "accountBalance": "Account balance",
+    "arCode": "AR code",
+    "arName": "Customer name",
+    "apName": "Vendor name",
+    "phone": "Phone",
+    "teamName": "Sales team",
+    "employeeName": "Employee",
+    "machineName": "Terminal",
+    "payment": "Payment",
+    "chequeAmount": "Cheque amount",
+    "detail": "Details",
+    "lastMonth": "Last month",
+    "lastYear": "Last year",
+    "amount": "Amount",
+    "selectSearch": "Select search",
+    "searchPrefix": "Search",
+    "filter": {
+      "endOfLastMonth": "End of last month",
+      "endOfLastYear": "End of last year",
+      "yesterday": "Yesterday",
+      "today": "Today",
+      "lastYearPeriod": "Last year",
+      "thisYear": "This year",
+      "thisMonth": "This month",
+      "previousMonth": "Previous month"
+    },
+    "dateRangeInvalid": "Start date must not be after end date",
+    "addressFields": {
+      "code": "Code",
+      "name": "Name",
+      "address": "Address",
+      "subdistrict": "Sub-district",
+      "district": "District",
+      "province": "Province",
+      "postcode": "Postcode",
+      "country": "Country",
+      "phone": "Phone",
+      "alias": "Alias",
+      "branch": "Branch",
+      "taxId": "Tax ID"
+    }
   }
 }

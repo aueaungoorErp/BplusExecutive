@@ -124,7 +124,7 @@ const ShowPos = ({
             marginLeft: 12,
             fontSize: FontSize.medium,
             color: 'black'
-          }}>{`ติดตามยอดขาย`}</Text>
+          }}>{Language.t('executiveMenus.ereport.salesTracking')}</Text>
                     </View>
 
 
@@ -174,12 +174,12 @@ const ShowPos = ({
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>ชื่อเครื่อง</Text></View>
+                  }}>{Language.t('report.machineName')}</Text></View>
                                     <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>รหัส</Text></View>
+                  }}>{Language.t('report.code')}</Text></View>
 
                                 </View>
                                 <ScrollView>
@@ -215,7 +215,7 @@ const ShowPos = ({
                       fontSize: FontSize.medium,
                       color: Colors.fontColor2,
                       alignSelf: 'center'
-                    }}>รวม</Text></View>
+                    }}>{Language.t('report.total')}</Text></View>
                                         <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                       fontSize: FontSize.medium,
                       color: Colors.fontColor2,

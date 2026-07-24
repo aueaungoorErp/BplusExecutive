@@ -108,7 +108,7 @@ const Ereport = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>คำถามที่ถามประจำ</Text>
+                    }}>{Language.t('executiveMenus.ereport.faq')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -145,7 +145,7 @@ const Ereport = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>ยอดลูกหนี้แต่ละราย</Text>
+                    }}>{Language.t('executiveMenus.ereport.arEach')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -182,7 +182,7 @@ const Ereport = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>ยอดเจ้าหนี้แต่ละราย</Text>
+                    }}>{Language.t('executiveMenus.ereport.apEach')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -225,7 +225,7 @@ const Ereport = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>สรุปยอดเช็คในธนาคาร</Text>
+                    }}>{Language.t('executiveMenus.ereport.chequeSummary')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -262,7 +262,7 @@ const Ereport = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>สรุปยอดลูกหนี้-เจ้าหนี้</Text>
+                    }}>{Language.t('executiveMenus.ereport.arApSummary')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -299,7 +299,7 @@ const Ereport = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>ติดตามยอดขาย</Text>
+                    }}>{Language.t('executiveMenus.ereport.salesTracking')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -317,7 +317,7 @@ const Ereport = () => {
                     fontSize: FontSize.medium,
                     fontWeight: 'bold'
                   }}>
-                                                {'ย้อนกลับ'}
+                                                {Language.t('executiveMenus.back')}
                                             </Text>
                                         </View>
                                     </TouchableNativeFeedback>

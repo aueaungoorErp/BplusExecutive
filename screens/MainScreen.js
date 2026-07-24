@@ -191,7 +191,7 @@ const MainScreen = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>รายงานสำหรับผู้บริหาร</Text>
+                    }}>{Language.t('executiveMenus.main.executiveReport')}</Text>
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -229,7 +229,7 @@ const MainScreen = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>รายงาน</Text>
+                    }}>{Language.t('executiveMenus.main.report')}</Text>
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -265,7 +265,7 @@ const MainScreen = () => {
                           alignSelf: 'center',
                           fontSize: FontSize.medium,
                           fontWeight: 'bold'
-                        }}>อนุมัติเอกสาร</Text>
+                        }}>{Language.t('executiveMenus.main.approveDocument')}</Text>
                       </View>
                     </View>
                    </TouchableOpacity>
@@ -301,7 +301,7 @@ const MainScreen = () => {
                           alignSelf: 'center',
                           fontSize: FontSize.medium,
                           fontWeight: 'bold'
-                        }}>อนุมัติวงเงิน</Text>
+                        }}>{Language.t('executiveMenus.main.approveLimit')}</Text>
                       </View>
                     </View>
                    </TouchableOpacity> */}
@@ -339,7 +339,7 @@ const MainScreen = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>สอบถามข้อมูลการซื้อ</Text>
+                    }}>{Language.t('executiveMenus.main.purchaseInquiry')}</Text>
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -378,7 +378,7 @@ const MainScreen = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>ปฏิทินงานประจำวัน</Text>
+                    }}>{Language.t('executiveMenus.main.dailyCalendar')}</Text>
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -402,7 +402,7 @@ const MainScreen = () => {
                     fontSize: FontSize.medium,
                     fontWeight: 'bold'
                   }}>
-                        {'ออกจากระบบ'}
+                        {Language.t('menu.logout')}
                       </Text>
                     </View>
                   </TouchableNativeFeedback>

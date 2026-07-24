@@ -111,7 +111,7 @@ const M3 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>แสดงยอดซื้อแต่ละเดือน</Text>
+                    }}>{Language.t('executiveMenus.m3.monthlyPurchase')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -151,7 +151,7 @@ const M3 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>แสดงยอดหนี้คงค้าง</Text>
+                    }}>{Language.t('executiveMenus.m3.outstandingPayable')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -191,7 +191,7 @@ const M3 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>แสดงยอดซื้อตามหมวดสินค้า</Text>
+                    }}>{Language.t('executiveMenus.m3.purchaseByCategory')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -229,7 +229,7 @@ const M3 = () => {
                                                     alignSelf: 'center',
                                                     fontSize: FontSize.medium,
                                                     fontWeight: 'bold'
-                                                }}>แสดงสินค้าสั่งซื้อค้างรับ</Text>
+                                                }}>{Language.t('executiveMenus.m3.pendingPurchase')}</Text>
                                             </View>
                                         </View>
                                      </TouchableOpacity> */}
@@ -269,7 +269,7 @@ const M3 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>แสดงที่อยู่</Text>
+                    }}>{Language.t('executiveMenus.m3.showAddress')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -288,7 +288,7 @@ const M3 = () => {
                     fontSize: FontSize.medium,
                     fontWeight: 'bold'
                   }}>
-                                                {'ย้อนกลับ'}
+                                                {Language.t('executiveMenus.back')}
                                             </Text>
                                         </View>
                                     </TouchableNativeFeedback>

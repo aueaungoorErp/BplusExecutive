@@ -53,22 +53,22 @@ const SlmnByYearMonth = ({
   const [radioIndex2, setRadioIndex2] = useState(6);
   const [radioIndex3, setRadioIndex3] = useState(6);
   const radio_props = [{
-    label: 'ปีก่อน',
+    label: Language.t('report.filter.lastYearPeriod'),
     value: 'lastyear'
   }, {
-    label: 'ปีนี้',
+    label: Language.t('report.filter.thisYear'),
     value: 'nowyear'
   }, {
-    label: 'เดือนนี้',
+    label: Language.t('report.filter.thisMonth'),
     value: 'nowmonth'
   }, {
-    label: 'เดือนก่อน',
+    label: Language.t('report.filter.previousMonth'),
     value: 'lastmonth'
   }, {
-    label: 'เมื่อวาน',
+    label: Language.t('report.filter.yesterday'),
     value: 'lastday'
   }, {
-    label: 'วันนี้',
+    label: Language.t('report.filter.today'),
     value: 'nowday'
   }, {
     label: null,
@@ -196,7 +196,7 @@ const SlmnByYearMonth = ({
             marginLeft: 12,
             fontSize: FontSize.medium,
             color: 'black'
-          }}>{`แสดงยอดพนักงานขายแต่ละเดือน`}</Text>
+          }}>{Language.t('executiveMenus.m6.slmnMonthly')}</Text>
                     </View>
                     <View>
                         <TouchableOpacity onPress={() => setModalVisible(true)}>
@@ -224,12 +224,12 @@ const SlmnByYearMonth = ({
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>ชื่อพนักงาน</Text></View>
+                  }}>{Language.t('report.employeeName')}</Text></View>
                                     <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}> ยอดขาย </Text></View>
+                  }}> {Language.t('report.sales')} </Text></View>
                                 </View>
                                 <ScrollView>
                                     <KeyboardAvoidingView keyboardVerticalOffset={1}>
@@ -264,7 +264,7 @@ const SlmnByYearMonth = ({
                       fontSize: FontSize.medium,
                       color: Colors.fontColor2,
                       alignSelf: 'center'
-                    }}>รวม</Text></View>
+                    }}>{Language.t('report.total')}</Text></View>
                                             <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                       fontSize: FontSize.medium,
                       color: Colors.fontColor2,
@@ -293,7 +293,7 @@ const SlmnByYearMonth = ({
                     flexDirection: 'row'
                   }}>
                                             <View width={20}></View>
-                                            <Text style={styles.modalText}>เลือกการค้นหา</Text>
+                                            <Text style={styles.modalText}>{Language.t('report.selectSearch')}</Text>
                                             <Pressable style={{
                       alignItems: 'flex-end'
                     }} onPress={() => setModalVisible(!modalVisible)}>
@@ -384,8 +384,8 @@ const SlmnByYearMonth = ({
                         marginRight: 5,
                         color: 'black',
                         fontWeight: 'bold'
-                      }}>ตั้งแต่</Text>
-                                                <CalendarScreen value={start_date} onChange={vel => setS_date(vel)} language={'th'} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
+                      }}>{Language.t('report.from')}</Text>
+                                                <CalendarScreen value={start_date} onChange={vel => setS_date(vel)} language={Language.getLang()} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
                         backgroundColor: Colors.backgroundColor,
                         buttonSuccess: {
                           backgroundColor: Colors.itemColor
@@ -407,8 +407,8 @@ const SlmnByYearMonth = ({
                         fontSize: FontSize.medium,
                         color: 'black',
                         fontWeight: 'bold'
-                      }}>ถึง</Text>
-                                                <CalendarScreen value={end_date} onChange={vel => setE_date(vel)} language={'th'} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
+                      }}>{Language.t('report.to')}</Text>
+                                                <CalendarScreen value={end_date} onChange={vel => setE_date(vel)} language={Language.getLang()} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
                         backgroundColor: Colors.backgroundColor,
                         buttonSuccess: {
                           backgroundColor: Colors.itemColor
@@ -421,7 +421,7 @@ const SlmnByYearMonth = ({
                       }} fontSize={FontSize.medium} fontColor={Colors.fontColor} width={250} borderRadius={10} />
                                             </View>
                                             <Pressable style={[styles.button, styles.buttonClose]} onPress={() => InCome()}>
-                                                <Text style={styles.textStyle}>ตกลง</Text>
+                                                <Text style={styles.textStyle}>{Language.t('alert.ok')}</Text>
                                             </Pressable>
                                         </View>
                                     </View>

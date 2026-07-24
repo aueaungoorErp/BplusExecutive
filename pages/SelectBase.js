@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, TextInput, Dimensions, Text, Platform, ActivityIndicator, Alert, Image, ImageBackground, KeyboardAvoidingView, ScrollView, TouchableNativeFeedback, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { useStateIfMounted } from 'use-state-if-mounted';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,13 @@ import * as loginActions from '../src/actions/loginActions';
 import * as registerActions from '../src/actions/registerActions';
 import * as databaseActions from '../src/actions/databaseActions';
 const CURRENT_BASE_VALUE = '__current_base__';
+const LANGUAGE_OPTIONS = [{
+  label: 'TH',
+  value: 'th'
+}, {
+  label: 'EN',
+  value: 'en'
+}];
 const SelectBase = ({
   route
 }) => {
@@ -43,7 +50,7 @@ const SelectBase = ({
   }) => databaseReducer);
   const [selectedValue, setSelectedValue] = useState('');
   const [selectbaseValue, setSelectbaseValue] = useState('-1');
-  const [selectlanguage, setlanguage] = useState(Language.getLang() == 'th' ? 'th' : 'en');
+  const [selectlanguage, setlanguage] = useState(loginReducer.language || (Language.getLang() == 'th' ? 'th' : 'en'));
   const [basename, setBasename] = useState('');
   const [baseurl, setBsaeurl] = useState('');
   const [username, setUsername] = useState('');
@@ -60,6 +67,9 @@ const SelectBase = ({
   });
   const [updateindex, setUpdateindex] = useState(null);
   const [openPicker, setOpenPicker] = useState(null);
+  const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
+  const [languageMenuLayout, setLanguageMenuLayout] = useState(null);
+  const languageTriggerRef = useRef(null);
   const image = '../images/UI/Asset35.png';
   const getBaseOption = (item, index) => {
     const rawName = typeof item?.nameser === 'string' ? item.nameser.trim() : '';
@@ -84,8 +94,10 @@ const SelectBase = ({
     value: CURRENT_BASE_VALUE
   }, ...baseOptions] : baseOptions;
   const setlanguageState = itemValue => {
-    setlanguage(itemValue);
-    dispatch(loginActions.setLanguage(itemValue));
+    const nextLanguage = itemValue === 'en' ? 'en' : 'th';
+    setlanguage(nextLanguage);
+    changeLanguage(nextLanguage);
+    dispatch(loginActions.setLanguage(nextLanguage));
   };
   const onLanguageChange = itemValue => {
     if (itemValue === selectlanguage) {
@@ -99,6 +111,59 @@ const SelectBase = ({
       onPress: () => setlanguageState(itemValue)
     }]);
   };
+  const openLanguageDropdown = () => {
+    if (languageDropdownOpen) {
+      setLanguageDropdownOpen(false);
+      return;
+    }
+    setOpenPicker(null);
+    languageTriggerRef.current?.measureInWindow((x, y, width, height) => {
+      setLanguageMenuLayout({
+        x,
+        y,
+        width,
+        height
+      });
+      setLanguageDropdownOpen(true);
+    });
+  };
+  const onLanguageOptionPress = itemValue => {
+    setLanguageDropdownOpen(false);
+    if (itemValue !== selectlanguage) {
+      onLanguageChange(itemValue);
+    }
+  };
+  const renderLanguageDropdown = () => <>
+      <View ref={languageTriggerRef} collapsable={false} style={styles.languageDropdownAnchor}>
+        <TouchableOpacity activeOpacity={0.7} style={[styles.pickerTrigger, styles.pickerTriggerCompact]} onPress={openLanguageDropdown}>
+          <Text style={[styles.pickerTriggerText, styles.pickerTriggerTextCompact]} numberOfLines={1}>
+            {selectlanguage === 'th' ? 'TH' : 'EN'}
+          </Text>
+          <Text style={[styles.pickerChevron, styles.pickerTriggerTextCompact]}>
+            {languageDropdownOpen ? '▲' : '▼'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <Modal visible={languageDropdownOpen} transparent animationType="fade" onRequestClose={() => setLanguageDropdownOpen(false)}>
+        <View style={styles.languageDropdownOverlayRoot}>
+          <Pressable style={styles.languageDropdownBackdrop} onPress={() => setLanguageDropdownOpen(false)} />
+          {languageMenuLayout ? <View style={[styles.languageDropdownMenu, {
+          top: languageMenuLayout.y + languageMenuLayout.height + 4,
+          left: languageMenuLayout.x,
+          minWidth: Math.max(languageMenuLayout.width, 96)
+        }]}>
+              {LANGUAGE_OPTIONS.map(option => {
+            const selected = option.value === selectlanguage;
+            return <TouchableOpacity key={option.value} activeOpacity={0.7} style={[styles.languageDropdownItem, selected && styles.languageDropdownItemSelected]} onPress={() => onLanguageOptionPress(option.value)}>
+                    <Text style={[styles.languageDropdownItemText, selected && styles.languageDropdownItemTextSelected]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>;
+          })}
+            </View> : null}
+        </View>
+      </Modal>
+    </>;
   const getBaseDisplayLabel = () => {
     if (selectbaseValue === '-1') {
       return Language.t('selectBase.lebel');
@@ -119,7 +184,12 @@ const SelectBase = ({
     modalTitle,
     options = []
   }) => <>
-      <TouchableOpacity disabled={!enabled} activeOpacity={0.7} style={[styles.pickerTrigger, compact && styles.pickerTriggerCompact, !enabled && styles.pickerTriggerDisabled]} onPress={() => enabled && setOpenPicker(pickerId)}>
+      <TouchableOpacity disabled={!enabled} activeOpacity={0.7} style={[styles.pickerTrigger, compact && styles.pickerTriggerCompact, !enabled && styles.pickerTriggerDisabled]} onPress={() => {
+        if (enabled) {
+          setLanguageDropdownOpen(false);
+          setOpenPicker(pickerId);
+        }
+      }}>
         <Text style={[styles.pickerTriggerText, compact && styles.pickerTriggerTextCompact]} numberOfLines={1}>
           {displayLabel}
         </Text>
@@ -506,20 +576,7 @@ const SelectBase = ({
           <View style={{
           marginLeft: 8
         }}>
-            {renderTapPicker({
-            pickerId: 'lang',
-            compact: true,
-            displayLabel: selectlanguage === 'th' ? 'TH' : 'EN',
-            selectedValue: selectlanguage,
-            onValueChange: onLanguageChange,
-            options: [{
-              label: 'TH',
-              value: 'th'
-            }, {
-              label: 'EN',
-              value: 'en'
-            }]
-          })}
+            {renderLanguageDropdown()}
           </View>
         </View>
         <ScrollView contentContainerStyle={{
@@ -906,6 +963,47 @@ const styles = StyleSheet.create({
     color: Colors.backgroundLoginColorSecondary,
     fontSize: FontSize.medium,
     fontWeight: 'bold'
+  },
+  languageDropdownAnchor: {
+    zIndex: 20
+  },
+  languageDropdownOverlayRoot: {
+    flex: 1
+  },
+  languageDropdownBackdrop: {
+    ...StyleSheet.absoluteFillObject
+  },
+  languageDropdownMenu: {
+    position: 'absolute',
+    backgroundColor: Colors.backgroundColorSecondary,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8
+  },
+  languageDropdownItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignItems: 'center'
+  },
+  languageDropdownItemSelected: {
+    backgroundColor: Colors.backgroundColor
+  },
+  languageDropdownItemText: {
+    fontSize: FontSize.medium,
+    color: Colors.fontColor,
+    fontWeight: '600'
+  },
+  languageDropdownItemTextSelected: {
+    color: Colors.buttonColorPrimary
   },
   pickerChevron: {
     fontSize: 10,

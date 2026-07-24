@@ -111,7 +111,7 @@ const M5 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>สรุปยอดลูกหนี้ครบกำหนดตามปีเดือน</Text>
+                    }}>{Language.t('executiveMenus.m5.arDueByYearMonth')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -151,7 +151,7 @@ const M5 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>สรุปยอดลูกหนี้ตามประเภทลูกหนี้</Text>
+                    }}>{Language.t('executiveMenus.m5.arByType')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -191,7 +191,7 @@ const M5 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>สรุปยอดเจ้าหนี้ครบกำหนดตามปีเดือน</Text>
+                    }}>{Language.t('executiveMenus.m5.apDueByYearMonth')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -231,7 +231,7 @@ const M5 = () => {
                       alignSelf: 'center',
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
-                    }}>สรุปยอดเจ้าหนี้ตามประเภทเจ้าหนี้</Text>
+                    }}>{Language.t('executiveMenus.m5.apByType')}</Text>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
@@ -251,7 +251,7 @@ const M5 = () => {
                     fontSize: FontSize.medium,
                     fontWeight: 'bold'
                   }}>
-                                                {'ย้อนกลับ'}
+                                                {Language.t('executiveMenus.back')}
                                             </Text>
                                         </View>
                                     </TouchableNativeFeedback>

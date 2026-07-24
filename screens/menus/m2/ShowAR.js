@@ -50,7 +50,7 @@ const showAR = ({
   const [end_date, setE_date] = useState(new Date());
   const [sum, setSum] = useState(0);
   const [textsearch, setSearch] = useState('');
-  const screenTitle = route?.params?.title || 'ยอดลูกหนี้แต่ละราย';
+  const screenTitle = route?.params?.title || Language.t('executiveMenus.ereport.arEach');
   var ser_die = true;
   useEffect(() => {}, []);
   const regisMacAdd = async () => {
@@ -149,7 +149,7 @@ const showAR = ({
             color: Colors.fontColor,
             padding: 10,
             fontSize: FontSize.medium
-          }} placeholderTextColor={Colors.fontColorSecondary} value={textsearch} placeholder={`ค้นหา${screenTitle}`} onChangeText={val => {
+          }} placeholderTextColor={Colors.fontColorSecondary} value={textsearch} placeholder={`${Language.t('report.searchPrefix')}${screenTitle}`} onChangeText={val => {
             setSearch(val);
           }} />
 
@@ -176,17 +176,17 @@ const showAR = ({
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>รหัสลูกหนี้</Text></View>
+                  }}>{Language.t('report.arCode')}</Text></View>
                                     <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>ชื่อลูกหนี้</Text></View>
+                  }}>{Language.t('report.arName')}</Text></View>
                                     <View width={deviceWidth * 0.3} style={tableStyles.tableHeaderTitle}><Text style={{
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>เบอร์โทร</Text></View>
+                  }}>{Language.t('report.phone')}</Text></View>
 
                                 </View>
                                 <ScrollView>

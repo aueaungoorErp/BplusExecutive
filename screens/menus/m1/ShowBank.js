@@ -53,22 +53,22 @@ const ShowBank = ({
   const [radioIndex2, setRadioIndex2] = useState(6);
   const [radioIndex3, setRadioIndex3] = useState(6);
   const radio_props = [{
-    label: 'ปีก่อน',
+    label: Language.t('report.filter.lastYearPeriod'),
     value: 'lastyear'
   }, {
-    label: 'ปีนี้',
+    label: Language.t('report.filter.thisYear'),
     value: 'nowyear'
   }, {
-    label: 'เดือนนี้',
+    label: Language.t('report.filter.thisMonth'),
     value: 'nowmonth'
   }, {
-    label: 'เดือนก่อน',
+    label: Language.t('report.filter.previousMonth'),
     value: 'lastmonth'
   }, {
-    label: 'เมื่อวาน',
+    label: Language.t('report.filter.yesterday'),
     value: 'lastday'
   }, {
-    label: 'วันนี้',
+    label: Language.t('report.filter.today'),
     value: 'nowday'
   }, {
     label: null,
@@ -206,7 +206,7 @@ const ShowBank = ({
             marginLeft: 12,
             fontSize: FontSize.medium,
             color: 'black'
-          }}>{`ยอดเงินในธนาคาร`}</Text>
+          }}>{Language.t('executiveMenus.m1.showBank')}</Text>
                     </View>
                     <View>
                         <TouchableOpacity onPress={() => setModalVisible(true)}>
@@ -229,12 +229,12 @@ const ShowBank = ({
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>ชื่อบัญชี</Text></View>
+                  }}>{Language.t('report.accountName')}</Text></View>
                                     <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
                     alignSelf: 'center'
-                  }}>ยอดเงินคงเหลือ</Text></View>
+                  }}>{Language.t('report.accountBalance')}</Text></View>
                                     <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                     fontSize: FontSize.medium,
                     color: Colors.fontColor2,
@@ -292,7 +292,7 @@ const ShowBank = ({
                                             <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                         fontSize: FontSize.medium,
                         color: Colors.fontColor2
-                      }}>รวม</Text></View>
+                      }}>{Language.t('report.total')}</Text></View>
                                             <View width={deviceWidth * 0.4} style={tableStyles.tableHeaderTitle}><Text style={{
                         fontSize: FontSize.medium,
                         color: Colors.fontColor2
@@ -327,7 +327,7 @@ const ShowBank = ({
                     flexDirection: 'row'
                   }}>
                                             <View width={20}></View>
-                                            <Text style={styles.modalText}>เลือกการค้นหา</Text>
+                                            <Text style={styles.modalText}>{Language.t('report.selectSearch')}</Text>
                                             <Pressable style={{
                       alignItems: 'flex-end'
                     }} onPress={() => setModalVisible(!modalVisible)}>
@@ -418,8 +418,8 @@ const ShowBank = ({
                         marginRight: 5,
                         color: 'black',
                         fontWeight: 'bold'
-                      }}>ตั้งแต่</Text>
-                                                <CalendarScreen value={start_date} onChange={vel => setS_date(vel)} language={'th'} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
+                      }}>{Language.t('report.from')}</Text>
+                                                <CalendarScreen value={start_date} onChange={vel => setS_date(vel)} language={Language.getLang()} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
                         backgroundColor: Colors.backgroundColor,
                         buttonSuccess: {
                           backgroundColor: Colors.itemColor
@@ -441,8 +441,8 @@ const ShowBank = ({
                         fontSize: FontSize.medium,
                         color: 'black',
                         fontWeight: 'bold'
-                      }}>ถึง</Text>
-                                                <CalendarScreen value={end_date} onChange={vel => setE_date(vel)} language={'th'} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
+                      }}>{Language.t('report.to')}</Text>
+                                                <CalendarScreen value={end_date} onChange={vel => setE_date(vel)} language={Language.getLang()} era={'be'} format={'DD/MM/YYYY'} borderColor={Colors.primaryColor} linkTodateColor={Colors.itemColor} calendarModel={{
                         backgroundColor: Colors.backgroundColor,
                         buttonSuccess: {
                           backgroundColor: Colors.itemColor
@@ -455,7 +455,7 @@ const ShowBank = ({
                       }} fontSize={FontSize.medium} fontColor={Colors.fontColor} width={250} borderRadius={10} />
                                             </View>
                                             <Pressable style={[styles.button, styles.buttonClose]} onPress={() => InCome()}>
-                                                <Text style={styles.textStyle}>ตกลง</Text>
+                                                <Text style={styles.textStyle}>{Language.t('alert.ok')}</Text>
                                             </Pressable>
                                         </View>
                                     </View>

@@ -226,6 +226,74 @@
     "next": "ถัดไป",
     "select": "โปรดระบุ"
   },
+  "dailyCalendar": {
+    "selectYear": "เลือกปี",
+    "selectMonth": "เลือกเดือน",
+    "dayDetail": "รายละเอียดวันที่"
+  },
+  "executiveMenus": {
+    "back": "ย้อนกลับ",
+    "main": {
+      "executiveReport": "รายงานสำหรับผู้บริหาร",
+      "report": "รายงาน",
+      "approveDocument": "อนุมัติเอกสาร",
+      "approveLimit": "อนุมัติวงเงิน",
+      "purchaseInquiry": "สอบถามข้อมูลการซื้อ",
+      "dailyCalendar": "ปฏิทินงานประจำวัน"
+    },
+    "ereport": {
+      "faq": "คำถามที่ถามประจำ",
+      "arEach": "ยอดลูกหนี้แต่ละราย",
+      "apEach": "ยอดเจ้าหนี้แต่ละราย",
+      "chequeSummary": "สรุปยอดเช็คในธนาคาร",
+      "arApSummary": "สรุปยอดลูกหนี้-เจ้าหนี้",
+      "salesTracking": "ติดตามยอดขาย"
+    },
+    "m1": {
+      "showIncome": "ยอดขายตามปีเดือน",
+      "showIncomeTeam": "ยอดขายตามทีมขาย",
+      "showBank": "ยอดเงินในธนาคาร",
+      "showDailySales": "แสดงยอดขายรายวัน",
+      "showDailyPayment": "แสดงยอดรับจ่ายรายวัน",
+      "currentStatus": "สรุปสถานภาพปัจจุบัน"
+    },
+    "m2": {
+      "monthlySales": "แสดงยอดขายแต่ละเดือน",
+      "outstandingDebt": "แสดงยอดหนี้คงค้าง",
+      "salesByCategory": "แสดงยอดขายตามหมวดสินค้า",
+      "goodsBooking": "แสดงสินค้าจองค้างส่ง",
+      "showAddress": "แสดงที่อยู่"
+    },
+    "m3": {
+      "monthlyPurchase": "แสดงยอดซื้อแต่ละเดือน",
+      "outstandingPayable": "แสดงยอดหนี้คงค้าง",
+      "purchaseByCategory": "แสดงยอดซื้อตามหมวดสินค้า",
+      "pendingPurchase": "แสดงสินค้าสั่งซื้อค้างรับ",
+      "showAddress": "แสดงที่อยู่"
+    },
+    "m4": {
+      "chequeReceived": "ยอดเช็ครับครบแต่ละเดือน",
+      "chequePaid": "ยอดเช็คจ่ายครบแต่ละเดือน",
+      "stockByCategory": "ยอดสินค้าคงเหลือตามหมวด",
+      "stockByLocation": "ยอดสินค้าคงเหลือตามตำแหน่งเก็บ"
+    },
+    "m5": {
+      "arDueByYearMonth": "สรุปยอดลูกหนี้ครบกำหนดตามปีเดือน",
+      "arByType": "สรุปยอดลูกหนี้ตามประเภทลูกหนี้",
+      "apDueByYearMonth": "สรุปยอดเจ้าหนี้ครบกำหนดตามปีเดือน",
+      "apByType": "สรุปยอดเจ้าหนี้ตามประเภทเจ้าหนี้"
+    },
+    "m6": {
+      "salesBySlmn": "สรุปยอดขายตามพนักงานขาย",
+      "salesByPos": "สรุปยอดขายตามเครื่องบันทึกเงินสด",
+      "slmnMonthly": "แสดงยอดพนักงานขายแต่ละเดือน",
+      "posMonthly": "แสดงยอดเครื่องบันทึกเงินสดแต่ละเดือน"
+    },
+    "approvalLimit": {
+      "salesByYearMonth": "ยอดขายตามปีเดือน",
+      "salesByTeam": "ยอดขายตามทีมขาย"
+    }
+  },
   "error_ser": {
     "607": "เครื่องเกินขีดจำกัด",
     "608": "เครื่องของคุณยังไม่ถูกลงทะเบียน",
@@ -254,6 +322,62 @@
     "orderingPrint": "กำลังพิมพ์",
     "cancelled": "การสั่งพิมพ์ถูกยกเลิก",
     "error": "การสังพิมพ์พบข้อผิดพลาด",
-    "Successful": "สร้างเอกสารสำเร็จ"
+    "Successful": "สร้างเอกสารสำเร็จ",
+    "total": "รวม",
+    "year": "ปี",
+    "month": "เดือน",
+    "code": "รหัส",
+    "name": "ชื่อ",
+    "date": "วันที่",
+    "document": "เอกสาร",
+    "debt": "ยอดหนี้",
+    "paid": "ชำระแล้ว",
+    "outstanding": "คงค้าง",
+    "balance": "ยอดคงเหลือ",
+    "sales": "ยอดขาย",
+    "purchase": "ยอดซื้อ",
+    "booking": "ยอดจอง",
+    "accountName": "ชื่อบัญชี",
+    "accountBalance": "ยอดเงินคงเหลือ",
+    "arCode": "รหัสลูกหนี้",
+    "arName": "ชื่อลูกหนี้",
+    "apName": "ชื่อเจ้าหนี้",
+    "phone": "เบอร์โทร",
+    "teamName": "ชื่อทีมขาย",
+    "employeeName": "ชื่อพนักงาน",
+    "machineName": "ชื่อเครื่อง",
+    "payment": "รับชำระ",
+    "chequeAmount": "ยอดเช็ค",
+    "detail": "รายละเอียด",
+    "lastMonth": "เดือนก่อน",
+    "lastYear": "ปีก่อน",
+    "amount": "ยอดเงิน",
+    "selectSearch": "เลือกการค้นหา",
+    "searchPrefix": "ค้นหา",
+    "filter": {
+      "endOfLastMonth": "สิ้นเดือนก่อน",
+      "endOfLastYear": "สิ้นปีก่อน",
+      "yesterday": "เมื่อวาน",
+      "today": "วันนี้",
+      "lastYearPeriod": "ปีก่อน",
+      "thisYear": "ปีนี้",
+      "thisMonth": "เดือนนี้",
+      "previousMonth": "เดือนก่อน"
+    },
+    "dateRangeInvalid": "วันที่ตั้งแต่ต้องไม่มากกว่าวันที่ถึง",
+    "addressFields": {
+      "code": "รหัส",
+      "name": "ชื่อ",
+      "address": "ที่อยู่",
+      "subdistrict": "แขวง-ตำบล",
+      "district": "เขต-อำเภอ",
+      "province": "จังหวัด",
+      "postcode": "ไปรษณีย์",
+      "country": "ประเทศ",
+      "phone": "โทร",
+      "alias": "ชื่ออื่นๆ",
+      "branch": "สาขา",
+      "taxId": "เลขผู้เสียภาษี"
+    }
   }
 }

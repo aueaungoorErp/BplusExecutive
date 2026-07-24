@@ -74,9 +74,7 @@ const DailyCalendarScreen = () => {
     tabbar,
     buttonContainer
   } = styles;
-  useEffect(() => {
-    //backsakura013
-  }, []);
+  const monthLabels = Language.getLang() === 'en' ? safe_Format.months_en : safe_Format.months_th;
   const [loading, setLoading] = useStateIfMounted(false);
   const [loading_backG, setLoading_backG] = useStateIfMounted(true);
   const [ser_die, setSer_die] = useStateIfMounted(true);
@@ -421,13 +419,13 @@ const DailyCalendarScreen = () => {
                 alignItems: 'stretch',
                 gap: 8
               }}>
-                    <DropdownPickerField selectedLabel={String(yearIndex)} pickerWidth="100%" boxStyle={PICKER_HALF_BOX} selectedValue={yearIndex} enabled={true} onValueChange={itemValue => set_yearIndex(Number(itemValue))}>
+                    <DropdownPickerField selectedLabel={String(yearIndex)} headerTitle={Language.t('dailyCalendar.selectYear')} pickerWidth="100%" boxStyle={PICKER_HALF_BOX} selectedValue={yearIndex} enabled={true} onValueChange={itemValue => set_yearIndex(Number(itemValue))}>
                       {safe_Format.state_years.map((obj, index) => <Picker.Item key={`year-${obj}-${index}`} color={Colors.itemColor} style={{
                     backgroundColor: Colors.backgroundColorSecondary
                   }} label={obj.toString()} value={obj} />)}
                     </DropdownPickerField>
-                    <DropdownPickerField selectedLabel={safe_Format.months_th[monthIndex]} pickerWidth="100%" boxStyle={PICKER_HALF_BOX} selectedValue={monthIndex} enabled={true} onValueChange={itemValue => set_MonthIndex(Number(itemValue))}>
-                      {safe_Format.months_th.map((obj, index) => <Picker.Item key={`month-${index}-${obj}`} color={Colors.itemColor} style={{
+                    <DropdownPickerField selectedLabel={monthLabels[monthIndex]} headerTitle={Language.t('dailyCalendar.selectMonth')} pickerWidth="100%" boxStyle={PICKER_HALF_BOX} selectedValue={monthIndex} enabled={true} onValueChange={itemValue => set_MonthIndex(Number(itemValue))}>
+                      {monthLabels.map((obj, index) => <Picker.Item key={`month-${index}-${obj}`} color={Colors.itemColor} style={{
                     backgroundColor: Colors.backgroundColorSecondary
                   }} label={obj} value={index} />)}
                     </DropdownPickerField>
@@ -438,7 +436,7 @@ const DailyCalendarScreen = () => {
                   fontSize: FontSize.medium,
                   color: Colors.fontColor
                 }}>
-                      {safe_Format.months_th[monthIndex]}
+                      {monthLabels[monthIndex]}
                     </Text>
                   </View>
                   <View>
@@ -588,7 +586,7 @@ const DailyCalendarScreen = () => {
                         <Text style={{
                       fontSize: FontSize.medium,
                       color: 'black'
-                    }}>{`รายละเอียดวันที่ ${dateIndex} ${safe_Format.months_th[monthIndex]} ${yearIndex}`}</Text>
+                    }}>{`${Language.t('dailyCalendar.dayDetail')} ${dateIndex} ${monthLabels[monthIndex]} ${yearIndex}`}</Text>
                       </View>
                       {/* นัดรับ */}
                       <TouchableNativeFeedback onPress={() => poppoint.SHOWCALENDARPOAPPOINT && poppoint.SHOWCALENDARPOAPPOINT.filter(item => {
@@ -778,7 +776,7 @@ const DailyCalendarScreen = () => {
                       fontSize: FontSize.medium,
                       fontWeight: 'bold'
                     }}>
-                          {'ย้อนกลับ'}
+                          {Language.t('executiveMenus.back')}
                         </Text>
                       </View>
                     </TouchableNativeFeedback>

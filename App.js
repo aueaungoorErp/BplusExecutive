@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { PersistGate } from 'redux-persist/es/integration/react';
 import { Provider } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
@@ -8,11 +8,10 @@ import {
 } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Button, Text, View, Image } from 'react-native';
-import { useStateIfMounted } from 'use-state-if-mounted';
 
 import { store, persistor } from './src/store/store';
-import { Language, changeLanguage } from './translations/I18n';
-import { useSelector } from 'react-redux';
+import { Language } from './translations/I18n';
+import LanguageBootstrap from './components/LanguageBootstrap';
 
 import AutoLogin from './screens/AutoLogin';
 import LoginScreen from './screens/LoginScreen';
@@ -77,16 +76,6 @@ import IncomeByPos from './screens/menus/m6/IncomeByPos';
 const LoginStack = createStackNavigator();
 const MainStack = createStackNavigator();
 const App = () => {
-  const loginReducer = useSelector(({ loginReducer }) => loginReducer);
-  const userReducer = useSelector(({ userReducer }) => userReducer);
-  const [userIndex, setUserIndex] = useStateIfMounted(loginReducer.index);
-  useEffect(() => {
-    if (userIndex == '-1') {
-      changeLanguage('th');
-    } else {
-      changeLanguage(userReducer.userData[userIndex].language);
-    }
-  }, []);
   const LoginStackScreen = () => {
     return (
       <LoginStack.Navigator>
@@ -116,6 +105,7 @@ const App = () => {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
+        <LanguageBootstrap>
         <NavigationContainer>
           <View style={{ flex: 1 }}>
             <MainStack.Navigator>
@@ -370,6 +360,7 @@ const App = () => {
             </MainStack.Navigator>
           </View>
         </NavigationContainer>
+        </LanguageBootstrap>
       </PersistGate>
     </Provider>
   );
