@@ -225,6 +225,100 @@ RCT_EXPORT_METHOD(readerQR:(NSString *)fileUrl
 @end
 `;
 
+const qrScanReaderAndroidSource = `package com.lewin.qrcode;
+
+import android.net.Uri;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+
+import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReactContextBaseJavaModule;
+import com.facebook.react.bridge.ReactMethod;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.mlkit.vision.barcode.Barcode;
+import com.google.mlkit.vision.barcode.BarcodeScanner;
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
+import com.google.mlkit.vision.barcode.BarcodeScanning;
+import com.google.mlkit.vision.common.InputImage;
+
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+
+/**
+ * Created by lewin on 2018/3/14,
+ * Updated by stefanmajiros on 2021/6/15
+ */
+
+public class QRScanReader extends ReactContextBaseJavaModule  {
+
+    public QRScanReader(ReactApplicationContext reactContext) {
+        super(reactContext);
+    }
+
+    @Override
+    public String getName() {
+        return "QRScanReader";
+    }
+
+    @ReactMethod
+    public void readerQR(String fileUrl, final Promise promise ) {
+        // ML Vision : https://developers.google.com/ml-kit/vision/barcode-scanning/android#java
+        try {
+            Uri uri = Uri.parse(fileUrl);
+            InputImage image = InputImage.fromFilePath(this.getReactApplicationContext(), uri);
+            BarcodeScannerOptions options = new BarcodeScannerOptions.Builder()
+                    .setBarcodeFormats(
+                            Barcode.FORMAT_AZTEC,
+                            Barcode.FORMAT_QR_CODE
+                    )
+                    .build();
+            final BarcodeScanner scanner = BarcodeScanning.getClient(options);
+            Task<List<Barcode>> result = scanner.process(image)
+                    .addOnSuccessListener(new OnSuccessListener<List<Barcode>>() {
+                        @Override
+                        public void onSuccess(List<Barcode> barcodes) {
+                            Log.d("OK", " " +  barcodes.toString());
+                            List<String> rawValues = new LinkedList<>();
+                            for (Barcode barcode: barcodes) {
+                                String rawValue = barcode.getRawValue();
+                                rawValues.add(rawValue);
+                            }
+                            scanner.close();
+                            if (!rawValues.isEmpty()){
+                                promise.resolve(rawValues.get(0));
+                            } else {
+                                promise.reject("NOT_OK", "Invalid or No related QR code");
+                            }
+
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.d("NOT_OK", "" +  e.getMessage());
+                            scanner.close();
+                            promise.reject("NOT_OK", e.getMessage());
+
+                        }
+                    });
+        } catch (IOException e) {
+            Log.e("ERROR", "" + e.getMessage());
+            e.printStackTrace();
+            promise.reject("IO_ERROR", e.getMessage(), e);
+        } catch (Exception e) {
+            Log.e("ERROR", "" + e.getMessage());
+            e.printStackTrace();
+            promise.reject("QR_ERROR", e.getMessage(), e);
+        }
+    }
+}
+`;
+
 const replacements = [
   [/^\s*jcenter\(\)\r?\n/gm, ''],
   [/\bcompile\s+(['"])/g, 'implementation $1'],
@@ -329,6 +423,20 @@ if (fs.existsSync(qrScanReaderFilePath)) {
   if (currentQrScanReader !== qrScanReaderSource) {
     fs.writeFileSync(qrScanReaderFilePath, qrScanReaderSource);
     console.log(`Patched ${qrScanReaderPath}`);
+  }
+}
+
+const qrScanReaderAndroidPath =
+  'node_modules/react-native-qr-decode-image-camera/android/src/main/java/com/lewin/qrcode/QRScanReader.java';
+const qrScanReaderAndroidFilePath = path.join(root, qrScanReaderAndroidPath);
+if (fs.existsSync(qrScanReaderAndroidFilePath)) {
+  const currentQrScanReaderAndroid = fs.readFileSync(
+    qrScanReaderAndroidFilePath,
+    'utf8',
+  );
+  if (currentQrScanReaderAndroid !== qrScanReaderAndroidSource) {
+    fs.writeFileSync(qrScanReaderAndroidFilePath, qrScanReaderAndroidSource);
+    console.log(`Patched ${qrScanReaderAndroidPath}`);
   }
 }
 
@@ -463,4 +571,86 @@ patchTextInFile(
   thDatepickerCalendar,
   `    }, [props.value])`,
   `    }, [props.value, props.format, props.era, props.language])`,
+);
+
+patchTextInFile(
+  'node_modules/react-native-image-picker/android/src/main/java/com/imagepicker/Utils.java',
+  `            if (Arrays.asList(declaredPermissions).contains(Manifest.permission.CAMERA)
+                    && ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }`,
+  `            if (Arrays.asList(declaredPermissions).contains(Manifest.permission.CAMERA)
+                    && ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.CAMERA}, 4815);
+                return false;
+            }`,
+);
+
+patchTextInFile(
+  'node_modules/react-native-image-picker/android/src/main/java/com/imagepicker/ImagePickerModuleImpl.java',
+  `        final Activity currentActivity = this.reactContext.getCurrentActivity();
+        if (currentActivity == null) {
+            callback.invoke(getErrorMap(errOthers, "Activity error"));
+            return;
+        }
+
+        if (!isCameraPermissionFulfilled(reactContext, currentActivity)) {
+            callback.invoke(getErrorMap(errOthers, cameraPermissionDescription));
+            return;
+        }`,
+  `        final Activity currentActivity = this.reactContext.getCurrentActivity();
+        if (currentActivity == null) {
+            this.reactContext.runOnUiQueueThread(new Runnable() {
+                @Override
+                public void run() {
+                    Activity activity = reactContext.getCurrentActivity();
+                    if (activity == null) {
+                        callback.invoke(getErrorMap(errOthers, "Activity error"));
+                        return;
+                    }
+                    launchCameraWithActivity(activity, options, callback);
+                }
+            });
+            return;
+        }
+
+        launchCameraWithActivity(currentActivity, options, callback);
+    }
+
+    private void launchCameraWithActivity(Activity currentActivity, final ReadableMap options, final Callback callback) {
+        if (!isCameraPermissionFulfilled(reactContext, currentActivity)) {
+            callback.invoke(getErrorMap(errPermission, cameraPermissionDescription));
+            return;
+        }`,
+);
+
+patchTextInFile(
+  'node_modules/react-native-image-picker/android/src/main/java/com/imagepicker/ImagePickerModuleImpl.java',
+  `    public void launchImageLibrary(final ReadableMap options, final Callback callback) {
+        final Activity currentActivity = this.reactContext.getCurrentActivity();
+        if (currentActivity == null) {
+            callback.invoke(getErrorMap(errOthers, "Activity error"));
+            return;
+        }`,
+  `    public void launchImageLibrary(final ReadableMap options, final Callback callback) {
+        final Activity currentActivity = this.reactContext.getCurrentActivity();
+        if (currentActivity == null) {
+            this.reactContext.runOnUiQueueThread(new Runnable() {
+                @Override
+                public void run() {
+                    Activity activity = reactContext.getCurrentActivity();
+                    if (activity == null) {
+                        callback.invoke(getErrorMap(errOthers, "Activity error"));
+                        return;
+                    }
+                    launchImageLibraryWithActivity(activity, options, callback);
+                }
+            });
+            return;
+        }
+
+        launchImageLibraryWithActivity(currentActivity, options, callback);
+    }
+
+    private void launchImageLibraryWithActivity(Activity currentActivity, final ReadableMap options, final Callback callback) {`,
 );
