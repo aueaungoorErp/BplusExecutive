@@ -33,6 +33,10 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>แอปใช้กล้องเพื่อสแกน QR Code สำหรับตั้งค่าฐานข้อมูลร้านค้า</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>แอปเข้าถึงรูปภาพเพื่อเลือก QR Code จากคลังภาพสำหรับตั้งค่าฐานข้อมูล</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>RCTNewArchEnabled</key>
