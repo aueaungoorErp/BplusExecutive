@@ -117,26 +117,32 @@ const ShowSellBook = ({
     setModalVisible(!modalVisible);
     var sDate = safe_Format.setnewdateF(safe_Format.checkDate(start_date));
     var eDate = safe_Format.setnewdateF(safe_Format.checkDate(end_date));
-    await fetch(databaseReducer.Data.urlser + '/Executive', {
+    const apiUrl = databaseReducer.Data.urlser + '/Executive';
+    const requestBody = {
+      'BPAPUS-BPAPSV': loginReducer.serviceID,
+      'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
+      'BPAPUS-FUNCTION': 'SHOWSELLBOOKPURCPOBYYEARMONTH',
+      'BPAPUS-PARAM': '{"FROM_DATE": "' + sDate + '","TO_DATE": ' + eDate + '}',
+      'BPAPUS-FILTER': '',
+      'BPAPUS-ORDERBY': '',
+      'BPAPUS-OFFSET': '0',
+      'BPAPUS-FETCH': '0'
+    };
+    console.log('[ShowSellBook] API', apiUrl);
+    console.log('[ShowSellBook] request body', requestBody);
+    await fetch(apiUrl, {
       method: 'POST',
-      body: JSON.stringify({
-        'BPAPUS-BPAPSV': loginReducer.serviceID,
-        'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
-        'BPAPUS-FUNCTION': 'SHOWSELLBOOKPURCPOBYYEARMONTH',
-        'BPAPUS-PARAM': '{"FROM_DATE": "' + sDate + '","TO_DATE": ' + eDate + '}',
-        'BPAPUS-FILTER': '',
-        'BPAPUS-ORDERBY': '',
-        'BPAPUS-OFFSET': '0',
-        'BPAPUS-FETCH': '0'
-      })
+      body: JSON.stringify(requestBody)
     }).then(response => response.json()).then(json => {
+      console.log('[ShowSellBook] response', json);
       let responseData = JSON.parse(json.ResponseData);
+      console.log('[ShowSellBook] parsed ResponseData', responseData);
       if (responseData.RECORD_COUNT > 0) {
         for (var i in responseData.SHOWSELLBOOKPURCPOBYYEARMONTH) {
           let jsonObj = {
             id: i,
             date: responseData.SHOWSELLBOOKPURCPOBYYEARMONTH[i].DI_DATE,
-            sellamount: responseData.SHOWSELLBOOKPURCPOBYYEARMONTH[i].SHOWSELLAMOUNT,
+            sellamount: responseData.SHOWSELLBOOKPURCPOBYYEARMONTH[i].SHOWSELLVALUE,
             bookamount: responseData.SHOWSELLBOOKPURCPOBYYEARMONTH[i].SHOWBOOKAMOUNT,
             purcamount: responseData.SHOWSELLBOOKPURCPOBYYEARMONTH[i].SHOWPURCAMOUNT,
             poamount: responseData.SHOWSELLBOOKPURCPOBYYEARMONTH[i].SHOWPOAMOUNT

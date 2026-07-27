@@ -34,6 +34,14 @@ const image = '../../images/UI/Asset35.png';
 let clockCall = null;
 const defaultCountDown = -1;
 const REPORT_PICKER_FONT = FontSize.medium;
+const LOG_TAG = '[ReportScreen]';
+const reportLog = (step, detail) => {
+  const payload =
+    detail === undefined
+      ? ''
+      : ` ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`;
+  console.log(`${LOG_TAG} ${step}${payload}`);
+};
 const ReportSelectRow = props => <View style={{
   marginTop: 10,
   flexDirection: 'row',
@@ -76,6 +84,7 @@ const ReportScreen = ({
   const [recon, setRecon] = useState('');
   const [GETPRINTSTATUS, setGETPRINTSTATUS] = useState([]);
   useEffect(() => {
+    reportLog('mount:start');
     fetchData();
     for (var i in Data) {}
   }, []);
@@ -97,6 +106,11 @@ const ReportScreen = ({
     }
     const stillValid = filteredReports.some(item => item.RPTSVR_GUID === printGuid);
     if (!stillValid) {
+      reportLog('printGuid:autoSelect', {
+        typeCode,
+        guid: filteredReports[0].RPTSVR_GUID,
+        name: filteredReports[0].RPTSVR_NAME,
+      });
       setPrintGuid(filteredReports[0].RPTSVR_GUID);
     }
   }, [typeCode, REPORTNAME, filteredReports, printGuid]);
@@ -118,9 +132,11 @@ const ReportScreen = ({
   })), [filteredReports]);
   const decrementClock = () => {
     if (countdown === 0) {
+      reportLog('countdown:timeout', { recon });
       setCountdown(0);
       clearInterval(clockCall);
     } else if (countdown === 16) {
+      reportLog('countdown:poll', { recon, kye_token });
       connectAgain();
     } else {
       setCountdown(countdown - 1);
@@ -128,6 +144,7 @@ const ReportScreen = ({
   };
   useEffect(() => {
     if (countdown === 0) {
+      reportLog('countdown:showReconnectAlert');
       Alert.alert(Language.t('alert.errorTitle'), Language.t('selectBase.UnableConnec'), [{
         text: Language.t('selectBase.connectAgain'),
         onPress: () => connectAgain()
@@ -138,9 +155,11 @@ const ReportScreen = ({
     }
   }, [countdown]);
   const connectAgain = () => {
+    reportLog('connectAgain', { recon });
     if (recon == 'fetchData') fetchData();else if (recon == 'PushPRINTREPORT') PushPRINTREPORT();else if (recon == 'fetchDataStatus') fetchDataStatus(kye_token);else setLoading(false);
   };
   const dieSer = fn => {
+    reportLog('dieSer', { fn });
     setRecon(fn);
     setCountdown(15);
   };
@@ -158,24 +177,38 @@ const ReportScreen = ({
     dieSer('fetchData');
     setLoadingKind('data');
     setLoading(true);
-    await fetch(databaseReducer.Data.urlser + '/RptServer', {
+    const apiUrl = databaseReducer.Data.urlser + '/RptServer';
+    const requestBody = {
+      'BPAPUS-BPAPSV': loginReducer.serviceID,
+      'BPAPUS-LOGIN-GUID': loginReducer.guid,
+      'BPAPUS-FUNCTION': 'GETREPORTNAME',
+      'BPAPUS-PARAM': '{"RPTSVR_GRANT": "' + activityReducer.RPTSVR_GRANT + '"}',
+      'BPAPUS-FILTER': '',
+      'BPAPUS-ORDERBY': '',
+      'BPAPUS-OFFSET': '0',
+      'BPAPUS-FETCH': '0'
+    };
+    reportLog('fetchData:start', { apiUrl, requestBody });
+    const startedAt = Date.now();
+    await fetch(apiUrl, {
       method: 'POST',
-      body: JSON.stringify({
-        'BPAPUS-BPAPSV': loginReducer.serviceID,
-        'BPAPUS-LOGIN-GUID': loginReducer.guid,
-        'BPAPUS-FUNCTION': 'GETREPORTNAME',
-        'BPAPUS-PARAM': '{"RPTSVR_GRANT": "' + activityReducer.RPTSVR_GRANT + '"}',
-        'BPAPUS-FILTER': '',
-        'BPAPUS-ORDERBY': '',
-        'BPAPUS-OFFSET': '0',
-        'BPAPUS-FETCH': '0'
-      })
+      body: JSON.stringify(requestBody)
     }).then(response => response.json()).then(async json => {
+      reportLog('fetchData:response', {
+        ms: Date.now() - startedAt,
+        ResponseCode: json.ResponseCode,
+        ReasonString: json.ReasonString || null,
+      });
       if (json.ResponseCode == 200) {
         let responseData = JSON.parse(json.ResponseData);
+        reportLog('fetchData:parsed', {
+          RECORD_COUNT: responseData.RECORD_COUNT,
+          count: responseData.GETREPORTNAME?.length || 0,
+        });
         if (responseData.RECORD_COUNT > 0) {
           await setREPORTNAME(responseData.GETREPORTNAME);
         } else {
+          reportLog('fetchData:noData');
           Alert.alert(Language.t('alert.errorTitle'), Language.t('report.noData'), [{
             text: Language.t('alert.ok'),
             onPress: () => navigation.goBack()
@@ -183,6 +216,7 @@ const ReportScreen = ({
         }
       } else {
         let temp_error = 'error_ser.' + json.ResponseCode;
+        reportLog('fetchData:errorCode', { temp_error, json });
         Alert.alert(`${Language.t('alert.errorTitle')} `, Language.t(temp_error), [{
           text: Language.t('alert.ok'),
           onPress: () => navigation.goBack()
@@ -191,7 +225,10 @@ const ReportScreen = ({
       }
       setLoading(false);
       setCountdown(-1);
+      reportLog('fetchData:done');
     }).catch(error => {
+      reportLog('fetchData:catch', { message: String(error) });
+      console.error(`${LOG_TAG} fetchData error =`, error);
       setCountdown(-1);
       let temp_error = 'error_ser.' + 610;
       Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
@@ -215,39 +252,65 @@ const ReportScreen = ({
     sDate = parseInt(sDate);
     let eDate = safe_Format.setnewdateF(end_date);
     if (printItem.RPTSVR_RPF_DD_FIELD == 'ANYDATE') eDate = sDate;else eDate = parseInt(eDate);
+    reportLog('PushPRINTREPORT:start', {
+      report: {
+        guid: tempprintItem.RPTSVR_GUID,
+        name: tempprintItem.RPTSVR_NAME,
+        dateField: tempprintItem.RPTSVR_RPF_DD_FIELD,
+      },
+      sDate,
+      eDate,
+      typeCode,
+    });
     if (sDate > eDate) {
+      reportLog('PushPRINTREPORT:invalidDate', { sDate, eDate });
       Alert.alert(Language.t('report.Failed'), Language.t('report.FailedInfo'), [{
         text: Language.t('alert.ok'),
         onPress: () => setLoading(false)
       }]);
     } else {
-      await fetch(databaseReducer.Data.urlser + '/RptServer', {
+      const apiUrl = databaseReducer.Data.urlser + '/RptServer';
+      const requestBody = {
+        'BPAPUS-BPAPSV': loginReducer.serviceID,
+        'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
+        'BPAPUS-FUNCTION': 'PRINTREPORT',
+        'BPAPUS-PARAM': '{"RPTSVR_GRANT": "' + activityReducer.RPTSVR_GRANT + '","RPTSVR_GUID": "' + tempprintItem.RPTSVR_GUID + '","RPTQUE_RQST_FROMDATE": "' + sDate + '","RPTQUE_RQST_TODATE": "' + eDate + '","RPTQUE_RQST_OPTN": "","RPTQUE_RQST_PARAM": ""}',
+        'BPAPUS-FILTER': '',
+        'BPAPUS-ORDERBY': '',
+        'BPAPUS-OFFSET': '0',
+        'BPAPUS-FETCH': '0'
+      };
+      reportLog('PushPRINTREPORT:request', { apiUrl, requestBody });
+      const startedAt = Date.now();
+      await fetch(apiUrl, {
         method: 'POST',
-        body: JSON.stringify({
-          'BPAPUS-BPAPSV': loginReducer.serviceID,
-          'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
-          'BPAPUS-FUNCTION': 'PRINTREPORT',
-          'BPAPUS-PARAM': '{"RPTSVR_GRANT": "' + activityReducer.RPTSVR_GRANT + '","RPTSVR_GUID": "' + tempprintItem.RPTSVR_GUID + '","RPTQUE_RQST_FROMDATE": "' + sDate + '","RPTQUE_RQST_TODATE": "' + eDate + '","RPTQUE_RQST_OPTN": "","RPTQUE_RQST_PARAM": ""}',
-          'BPAPUS-FILTER': '',
-          'BPAPUS-ORDERBY': '',
-          'BPAPUS-OFFSET': '0',
-          'BPAPUS-FETCH': '0'
-        })
+        body: JSON.stringify(requestBody)
       }).then(response => response.json()).then(json => {
+        reportLog('PushPRINTREPORT:response', {
+          ms: Date.now() - startedAt,
+          ResponseCode: json.ResponseCode,
+          ReasonString: json.ReasonString || null,
+          ResponseData: json.ResponseData || null,
+        });
         let responseData = JSON.parse(json.ResponseData);
         let tempRPTSVR_DATA = activityReducer.RPTSVR_DATA;
         if (json.ResponseCode == 200) {
+          reportLog('PushPRINTREPORT:queued', responseData);
           tempRPTSVR_DATA.push(responseData);
           dispatch(activityActions.RPTSVR_DATA(tempRPTSVR_DATA));
           setGETPRINTSTATUS([]);
           fetchDataStatus(responseData);
         } else {
+          reportLog('PushPRINTREPORT:failed', json);
+          setLoading(false);
           Alert.alert(Language.t('notiAlert.header'), `${Language.t('report.Failed')} ${json.ReasonString}`, [{
             text: Language.t('alert.ok'),
             onPress: () => void 0
           }]);
         }
       }).catch(error => {
+        reportLog('PushPRINTREPORT:catch', { message: String(error) });
+        console.error(`${LOG_TAG} PushPRINTREPORT error =`, error);
         setCountdown(-1);
         let temp_error = 'error_ser.' + 610;
         Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
@@ -257,37 +320,65 @@ const ReportScreen = ({
         setLoading(false);
       });
     }
+    reportLog('PushPRINTREPORT:clearCountdown');
     setCountdown(-1);
   };
   const fetchDataStatus = async itemtoken => {
+    reportLog('fetchDataStatus:start', {
+      itemtoken,
+      tokenType: typeof itemtoken,
+      RPTQUE_GUID: itemtoken?.RPTQUE_GUID || itemtoken,
+    });
     setkye_token(itemtoken);
     dieSer('fetchDataStatus');
     setLoadingKind('print');
     setLoading(true);
-    await fetch(databaseReducer.Data.urlser + '/RptServer', {
+    const queueGuid = itemtoken?.RPTQUE_GUID || itemtoken;
+    const apiUrl = databaseReducer.Data.urlser + '/RptServer';
+    const requestBody = {
+      'BPAPUS-BPAPSV': loginReducer.serviceID,
+      'BPAPUS-LOGIN-GUID': loginReducer.guid,
+      'BPAPUS-FUNCTION': 'GETPRINTSTATUS',
+      'BPAPUS-PARAM': '{"RPTQUE_GUID": "' + queueGuid + '"}',
+      'BPAPUS-FILTER': '',
+      'BPAPUS-ORDERBY': '',
+      'BPAPUS-OFFSET': '0',
+      'BPAPUS-FETCH': '0'
+    };
+    reportLog('fetchDataStatus:request', { apiUrl, requestBody });
+    const startedAt = Date.now();
+    await fetch(apiUrl, {
       method: 'POST',
-      body: JSON.stringify({
-        'BPAPUS-BPAPSV': loginReducer.serviceID,
-        'BPAPUS-LOGIN-GUID': loginReducer.guid,
-        'BPAPUS-FUNCTION': 'GETPRINTSTATUS',
-        'BPAPUS-PARAM': '{"RPTQUE_GUID": "' + itemtoken.RPTQUE_GUID + '"}',
-        'BPAPUS-FILTER': '',
-        'BPAPUS-ORDERBY': '',
-        'BPAPUS-OFFSET': '0',
-        'BPAPUS-FETCH': '0'
-      })
+      body: JSON.stringify(requestBody)
     }).then(response => response.json()).then(json => {
+      reportLog('fetchDataStatus:response', {
+        ms: Date.now() - startedAt,
+        ResponseCode: json.ResponseCode,
+        ReasonString: json.ReasonString || null,
+        ResponseData: json.ResponseData || null,
+      });
       let responseData = JSON.parse(json.ResponseData);
+      reportLog('fetchDataStatus:parsed', {
+        RECORD_COUNT: responseData.RECORD_COUNT,
+        status: responseData.GETPRINTSTATUS?.[0] || null,
+      });
       if (responseData.RECORD_COUNT > 0) {
-        if (responseData.GETPRINTSTATUS[0].RPTQUE_RSLT_STATUS == 1) {
+        const printStatus = responseData.GETPRINTSTATUS[0].RPTQUE_RSLT_STATUS;
+        if (printStatus == 1) {
+          reportLog('fetchDataStatus:success', responseData.GETPRINTSTATUS[0]);
           setGETPRINTSTATUS(responseData.GETPRINTSTATUS);
           DownloadReport(responseData.GETPRINTSTATUS[0]);
           setCountdown(-1);
           setLoading(false);
-        } else if (responseData.GETPRINTSTATUS[0].RPTQUE_RSLT_STATUS == 0) {
+        } else if (printStatus == 0) {
+          reportLog('fetchDataStatus:processing', {
+            status: printStatus,
+            nextPollInSec: 18,
+          });
           setCountdown(18);
           setGETPRINTSTATUS(responseData.GETPRINTSTATUS);
         } else {
+          reportLog('fetchDataStatus:terminal', { status: printStatus });
           setCountdown(-1);
           setLoading(false);
           Alert.alert(Language.t('notiAlert.header'), `${responseData.GETPRINTSTATUS[0].RPTQUE_RSLT_STATUS == 7 ? Language.t('report.cancelled') : responseData.GETPRINTSTATUS[0].RPTQUE_RSLT_STATUS == 8 ? Language.t('report.cancelled') : responseData.GETPRINTSTATUS[0].RPTQUE_RSLT_STATUS == 1 ? Language.t('report.Successful') : Language.t('report.printing')}
@@ -297,10 +388,16 @@ const ReportScreen = ({
           }]);
         }
       } else {
+        reportLog('fetchDataStatus:emptyRecord', {
+          queueGuid,
+          retryWith: itemtoken?.RPTQUE_GUID || itemtoken,
+        });
         setCountdown(15);
-        fetchDataStatus(itemtoken.RPTQUE_GUID);
+        fetchDataStatus(itemtoken?.RPTQUE_GUID ? itemtoken : { RPTQUE_GUID: itemtoken });
       }
     }).catch(error => {
+      reportLog('fetchDataStatus:catch', { message: String(error) });
+      console.error(`${LOG_TAG} fetchDataStatus error =`, error);
       let temp_error = 'error_ser.' + 610;
       Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
         text: Language.t('alert.ok'),
@@ -310,6 +407,7 @@ const ReportScreen = ({
     });
   };
   const DownloadReport = async tempItem => {
+    reportLog('DownloadReport:start', tempItem);
     dieSer('DownloadReport');
     setGETPRINTSTATUS([]);
     const permission = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE, {
@@ -319,7 +417,12 @@ const ReportScreen = ({
       buttonNegative: 'Cancel',
       buttonPositive: 'OK'
     });
-    if (permission === 'denied') return;
+    reportLog('DownloadReport:permission', { permission });
+    if (permission === 'denied') {
+      reportLog('DownloadReport:permissionDenied');
+      setLoading(false);
+      return;
+    }
     if (permission === 'granted') {
       // YOUR WRITE FUNCTION HERE
     }
@@ -329,6 +432,19 @@ const ReportScreen = ({
     let docname;
     for (var i in docpath) if (docpath[i].toUpperCase().search('.PDF') > -1) docname = docpath[i];
     docname = docname.toUpperCase().split('.PDF');
+    const downloadUrl = databaseReducer.Data.urlser + '/DownloadFile';
+    const downloadHeaders = {
+      'BPAPUS-BPAPSV': loginReducer.serviceID,
+      'BPAPUS-GUID': loginReducer.guid,
+      FilePath: '',
+      FileName: tempItem.RPTQUE_RSLT_PATH
+    };
+    reportLog('DownloadReport:request', {
+      downloadUrl,
+      downloadHeaders,
+      savePath: dirs + `/${docname[0]}.pdf`,
+    });
+    const startedAt = Date.now();
     await RNFetchBlob.config({
       path: dirs + `/${docname[0]}.pdf`,
       appendExt: 'pdf',
@@ -337,15 +453,17 @@ const ReportScreen = ({
       fileCache: true,
       useDownloadManager: true,
       notification: true
-    }).fetch('GET', databaseReducer.Data.urlser + '/DownloadFile', {
-      'BPAPUS-BPAPSV': loginReducer.serviceID,
-      'BPAPUS-GUID': loginReducer.guid,
-      FilePath: '',
-      FileName: tempItem.RPTQUE_RSLT_PATH
-    }).then(res => {
+    }).fetch('GET', downloadUrl, downloadHeaders).then(res => {
       base64 = res.path();
+      reportLog('DownloadReport:success', {
+        ms: Date.now() - startedAt,
+        path: base64,
+      });
+      setLoading(false);
       RNFetchBlob.android.actionViewIntent(base64, 'application/pdf');
     }).catch(error => {
+      reportLog('DownloadReport:catch', { message: String(error) });
+      console.error(`${LOG_TAG} DownloadReport error =`, error);
       let temp_error = 'error_ser.' + 610;
       Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
         text: Language.t('alert.ok'),
@@ -370,7 +488,10 @@ const ReportScreen = ({
                       {Language.t('report.ReportType')} :
                     </Text>
                   </View>
-                  <ReportSelectRow selectedLabel={typeItem?.THNAME ?? ''} selectedValue={typeCode} options={reportTypeOptions} modalTitle={Language.t('report.ReportType')} onSelect={value => setTypeCode(value)} />
+                  <ReportSelectRow selectedLabel={typeItem?.THNAME ?? ''} selectedValue={typeCode} options={reportTypeOptions} modalTitle={Language.t('report.ReportType')} onSelect={value => {
+                    reportLog('typeSelected', { typeCode: value });
+                    setTypeCode(value);
+                  }} />
                   <View style={styles.body1}>
                     <Text style={styles.textTitleInfo}>
                       {Language.t('report.reportName')} :
@@ -379,6 +500,11 @@ const ReportScreen = ({
                   {filteredReports.length > 0 ? <ReportSelectRow selectedLabel={reportNameLabel} selectedValue={reportNamePickerIndex} options={reportNameOptions} modalTitle={Language.t('report.reportName')} onSelect={index => {
                   const picked = filteredReports[Number(index)];
                   if (picked?.RPTSVR_GUID) {
+                    reportLog('reportSelected', {
+                      guid: picked.RPTSVR_GUID,
+                      name: picked.RPTSVR_NAME,
+                      dateField: picked.RPTSVR_RPF_DD_FIELD,
+                    });
                     setPrintGuid(picked.RPTSVR_GUID);
                   }
                 }} /> : <ReportSelectRow selectedLabel={Language.t('report.noData')} selectedValue={null} options={[]} enabled={false} labelColor="#979797" onSelect={() => {}} />}
@@ -450,9 +576,16 @@ const ReportScreen = ({
                   marginTop: FontSize.large
                 }}>
                     {filteredReports.length > 0 ? <TouchableOpacity style={[styles.button, styles.buttonClose]} onPress={() => {
+                    reportLog('printButton:pressed', {
+                      name: printItem.RPTSVR_NAME || REPORTNAME[0]?.RPTSVR_NAME,
+                      guid: printItem.RPTSVR_GUID,
+                    });
                     Alert.alert(Language.t('notiAlert.header'), `${Language.t('report.doPrint')} ${printItem.RPTSVR_NAME ? printItem.RPTSVR_NAME : REPORTNAME[0].RPTSVR_NAME} ${Language.t('report.YorN')}`, [{
                       text: Language.t('selectBase.yes'),
-                      onPress: () => PushPRINTREPORT()
+                      onPress: () => {
+                        reportLog('printButton:confirmed');
+                        PushPRINTREPORT();
+                      }
                     }, {
                       text: Language.t('selectBase.no'),
                       onPress: () => void 0

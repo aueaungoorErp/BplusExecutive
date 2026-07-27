@@ -5,18 +5,9 @@ import RNFetchBlob from 'rn-fetch-blob';
 
 const { PNG } = require('pngjs/browser');
 
-const LOG_TAG = '[QrDecode]';
-const MAX_QR_SCAN_DIMENSION = 800;
+const SCAN_SIZES = [480, 640, 800];
 
-const qrLog = (step, detail) => {
-  const payload =
-    detail === undefined
-      ? ''
-      : ` ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`;
-  console.log(`${LOG_TAG} ${step}${payload}`);
-};
-
-const elapsedMs = startedAt => Date.now() - startedAt;
+const yieldToMainThread = () => new Promise(resolve => setTimeout(resolve, 0));
 
 const isPng = bytes =>
   bytes.length >= 4 &&
@@ -45,7 +36,7 @@ const toBytes = input => {
   throw new Error('Unsupported image input type');
 };
 
-const downscaleRgba = (data, width, height, maxDim = MAX_QR_SCAN_DIMENSION) => {
+const downscaleRgba = (data, width, height, maxDim) => {
   if (width <= maxDim && height <= maxDim) {
     return { data, width, height };
   }
@@ -72,11 +63,9 @@ const downscaleRgba = (data, width, height, maxDim = MAX_QR_SCAN_DIMENSION) => {
 };
 
 const decodeImageToRgba = bytes => {
-  const startedAt = Date.now();
   if (isPng(bytes)) {
-    qrLog('decodeImageToRgba:png:start', { byteLength: bytes.length });
     const png = PNG.sync.read(Buffer.from(bytes));
-    const rgba = {
+    return {
       data: new Uint8ClampedArray(
         png.data.buffer,
         png.data.byteOffset,
@@ -85,108 +74,59 @@ const decodeImageToRgba = bytes => {
       width: png.width,
       height: png.height,
     };
-    qrLog('decodeImageToRgba:png:done', {
-      width: rgba.width,
-      height: rgba.height,
-      ms: elapsedMs(startedAt),
-    });
-    return rgba;
   }
 
-  qrLog('decodeImageToRgba:jpeg:start', { byteLength: bytes.length });
   const decoded = jpeg.decode(bytes, { useTArray: true });
-  const rgba = {
+  return {
     data: new Uint8ClampedArray(decoded.data),
     width: decoded.width,
     height: decoded.height,
   };
-  qrLog('decodeImageToRgba:jpeg:done', {
-    width: rgba.width,
-    height: rgba.height,
-    ms: elapsedMs(startedAt),
-  });
-  return rgba;
 };
 
-const scanRgba = (data, width, height) => {
-  const startedAt = Date.now();
-  const scanAttempts = [
-    { data, width, height, label: 'full' },
-  ];
-  const scaled = downscaleRgba(data, width, height);
-  if (scaled.width !== width || scaled.height !== height) {
-    scanAttempts.push({
-      data: scaled.data,
-      width: scaled.width,
-      height: scaled.height,
-      label: 'scaled',
-    });
-  }
+const scanRgba = async (data, width, height) => {
+  for (const maxDim of SCAN_SIZES) {
+    await yieldToMainThread();
+    const scaled = downscaleRgba(data, width, height, maxDim);
 
-  for (const attempt of scanAttempts) {
-    qrLog('scanRgba:start', {
-      label: attempt.label,
-      width: attempt.width,
-      height: attempt.height,
-    });
-    const code = jsQR(attempt.data, attempt.width, attempt.height, {
-      inversionAttempts: 'attemptBoth',
+    let code = jsQR(scaled.data, scaled.width, scaled.height, {
+      inversionAttempts: 'dontInvert',
     });
     if (code?.data) {
-      qrLog('scanRgba:done', {
-        label: attempt.label,
-        found: true,
-        ms: elapsedMs(startedAt),
-      });
       return code.data;
+    }
+
+    if (maxDim <= 640) {
+      await yieldToMainThread();
+      code = jsQR(scaled.data, scaled.width, scaled.height, {
+        inversionAttempts: 'attemptBoth',
+      });
+      if (code?.data) {
+        return code.data;
+      }
     }
   }
 
-  qrLog('scanRgba:done', {
-    found: false,
-    ms: elapsedMs(startedAt),
-  });
   return null;
 };
 
-export const decodeQrFromBytes = bytes => {
-  const startedAt = Date.now();
-  qrLog('decodeQrFromBytes:start', { byteLength: bytes?.length || 0 });
+export const decodeQrFromBytes = async bytes => {
   const rgba = decodeImageToRgba(toBytes(bytes));
-  const result = scanRgba(rgba.data, rgba.width, rgba.height);
+  await yieldToMainThread();
+  const result = await scanRgba(rgba.data, rgba.width, rgba.height);
   if (!result) {
-    qrLog('decodeQrFromBytes:not_found', { ms: elapsedMs(startedAt) });
     const error = new Error('QR_NOT_FOUND');
     error.code = 'QR_NOT_FOUND';
     throw error;
   }
-  qrLog('decodeQrFromBytes:success', {
-    length: result.length,
-    ms: elapsedMs(startedAt),
-  });
   return result;
 };
 
-export const decodeQrFromBase64 = base64 => {
-  const startedAt = Date.now();
-  qrLog('decodeQrFromBase64:start', { base64Length: base64?.length || 0 });
-  const result = decodeQrFromBytes(base64);
-  qrLog('decodeQrFromBase64:done', { ms: elapsedMs(startedAt) });
-  return result;
-};
+export const decodeQrFromBase64 = async base64 => decodeQrFromBytes(base64);
 
 export const decodeQrFromUri = async uri => {
-  const startedAt = Date.now();
-  qrLog('decodeQrFromUri:readFile:start', { uri });
   const base64 = await RNFetchBlob.fs.readFile(uri, 'base64');
-  qrLog('decodeQrFromUri:readFile:done', {
-    base64Length: base64?.length || 0,
-    ms: elapsedMs(startedAt),
-  });
-  const decodeStartedAt = Date.now();
-  const result = decodeQrFromBytes(base64);
-  qrLog('decodeQrFromUri:done', { ms: elapsedMs(decodeStartedAt) });
-  return result;
+  return decodeQrFromBytes(base64);
 };
 
 const QRreader = uri => decodeQrFromUri(uri);

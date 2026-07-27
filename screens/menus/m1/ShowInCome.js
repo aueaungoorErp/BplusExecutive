@@ -200,12 +200,10 @@ const ShowInCome = ({
       'BPAPUS-OFFSET': '0',
       'BPAPUS-FETCH': '0'
     };
-    console.log('[ShowInCome] request body', requestBody);
     await fetch(databaseReducer.Data.urlser + '/Executive', {
       method: 'POST',
       body: JSON.stringify(requestBody)
     }).then(response => response.json()).then(json => {
-      console.log('[ShowInCome] response', json);
       let responseData = JSON.parse(json.ResponseData);
       const nextRows = [];
       if (responseData.RECORD_COUNT > 0) {

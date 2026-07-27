@@ -16,7 +16,13 @@ const deviceHeight = Dimensions.get('window').height;
 import * as loginActions from '../src/actions/loginActions';
 import * as registerActions from '../src/actions/registerActions';
 import * as databaseActions from '../src/actions/databaseActions';
+import {
+  buildQrNavigationPayload,
+  decodeQrImageAsset,
+  getQrErrorDetail,
+} from '../src/qrDecodeUtils';
 const CURRENT_BASE_VALUE = '__current_base__';
+const QR_DECODE_OVERALL_TIMEOUT_MS = 15000;
 const LANGUAGE_OPTIONS = [{
   label: 'TH',
   value: 'th'
@@ -70,6 +76,7 @@ const SelectBase = ({
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const [languageMenuLayout, setLanguageMenuLayout] = useState(null);
   const languageTriggerRef = useRef(null);
+  const pendingQrImageRef = useRef(null);
   const image = '../images/UI/Asset35.png';
   const getBaseOption = (item, index) => {
     const rawName = typeof item?.nameser === 'string' ? item.nameser.trim() : '';
@@ -269,6 +276,90 @@ const SelectBase = ({
       if (route.params.qrDebug) {}
     }
   }, [route.params?.post]);
+  useEffect(() => {
+    const pendingQrImage = route.params?.pendingQrImage;
+    if (!pendingQrImage) {
+      return undefined;
+    }
+
+    const pendingKey = JSON.stringify([
+      pendingQrImage.id || 0,
+      pendingQrImage.base64?.length || 0,
+      pendingQrImage.uri || '',
+      pendingQrImage.path || '',
+      pendingQrImage.originalPath || '',
+    ]);
+    if (pendingQrImageRef.current === pendingKey) {
+      return undefined;
+    }
+    pendingQrImageRef.current = pendingKey;
+
+    let isActive = true;
+
+    const processPendingQrImage = async () => {
+      setLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      try {
+        const data = await Promise.race([
+          decodeQrImageAsset(pendingQrImage),
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error('QR_TIMEOUT')),
+              QR_DECODE_OVERALL_TIMEOUT_MS,
+            ),
+          ),
+        ]);
+        if (!isActive) {
+          return;
+        }
+        const navigationPayload = buildQrNavigationPayload(data);
+        setBasename(navigationPayload.post.value);
+        setBsaeurl(navigationPayload.post.label);
+        setSelectbaseValue(CURRENT_BASE_VALUE);
+        const scannedUsername =
+          navigationPayload.post.username ||
+          navigationPayload.credentials?.username ||
+          '';
+        const scannedPassword =
+          navigationPayload.post.password ||
+          navigationPayload.credentials?.password ||
+          '';
+        if (scannedUsername || scannedPassword) {
+          setUsername(scannedUsername);
+          setPassword(scannedPassword);
+        }
+        navigation.setParams({ pendingQrImage: undefined });
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+        const attemptDetails = Array.isArray(error?.attemptDetails)
+          ? error.attemptDetails.join('\n')
+          : '';
+        Alert.alert(
+          Language.t('alert.errorTitle'),
+          [
+            Language.t('selectBase.notfound'),
+            `Reason: ${getQrErrorDetail(error)}`,
+            attemptDetails ? `Attempts:\n${attemptDetails}` : '',
+          ]
+            .filter(Boolean)
+            .join('\n\n'),
+          [{ text: Language.t('alert.ok'), onPress: () => void 0 }],
+        );
+        navigation.setParams({ pendingQrImage: undefined });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    processPendingQrImage();
+
+    return () => {
+      isActive = false;
+    };
+  }, [route.params?.pendingQrImage, navigation]);
   useEffect(() => {
     if (loginReducer.language && loginReducer.language != Language.getLang()) {
       changeLanguage(loginReducer.language);

@@ -104,20 +104,26 @@ const ShowInComeTeam = ({
     setModalVisible(!modalVisible);
     var sDate = safe_Format.setnewdateF(safe_Format.checkDate(start_date));
     var eDate = safe_Format.setnewdateF(safe_Format.checkDate(end_date));
-    await fetch(databaseReducer.Data.urlser + '/Executive', {
+    const apiUrl = databaseReducer.Data.urlser + '/Executive';
+    const requestBody = {
+      'BPAPUS-BPAPSV': loginReducer.serviceID,
+      'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
+      'BPAPUS-FUNCTION': 'SHOWINCOMEBYSLTEAM',
+      'BPAPUS-PARAM': '{"FROM_DATE": "' + sDate + '","TO_DATE": ' + eDate + '}',
+      'BPAPUS-FILTER': '',
+      'BPAPUS-ORDERBY': '',
+      'BPAPUS-OFFSET': '0',
+      'BPAPUS-FETCH': '0'
+    };
+    console.log('[ShowInComeTeam] API', apiUrl);
+    console.log('[ShowInComeTeam] request body', requestBody);
+    await fetch(apiUrl, {
       method: 'POST',
-      body: JSON.stringify({
-        'BPAPUS-BPAPSV': loginReducer.serviceID,
-        'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
-        'BPAPUS-FUNCTION': 'SHOWINCOMEBYSLTEAM',
-        'BPAPUS-PARAM': '{"FROM_DATE": "' + sDate + '","TO_DATE": ' + eDate + '}',
-        'BPAPUS-FILTER': '',
-        'BPAPUS-ORDERBY': '',
-        'BPAPUS-OFFSET': '0',
-        'BPAPUS-FETCH': '0'
-      })
+      body: JSON.stringify(requestBody)
     }).then(response => response.json()).then(json => {
+      console.log('[ShowInComeTeam] response', json);
       let responseData = JSON.parse(json.ResponseData);
+      console.log('[ShowInComeTeam] parsed ResponseData', responseData);
       if (responseData.RECORD_COUNT > 0) {
         for (var i in responseData.SHOWINCOMEBYSLTEAM) {
           let jsonObj = {
