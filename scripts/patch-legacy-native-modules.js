@@ -577,13 +577,93 @@ patchTextInFile(
   'node_modules/react-native-image-picker/android/src/main/java/com/imagepicker/Utils.java',
   `            if (Arrays.asList(declaredPermissions).contains(Manifest.permission.CAMERA)
                     && ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.CAMERA}, 4815);
                 return false;
             }`,
   `            if (Arrays.asList(declaredPermissions).contains(Manifest.permission.CAMERA)
                     && ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.CAMERA}, 4815);
                 return false;
             }`,
+);
+
+patchTextInFile(
+  'node_modules/react-native-image-picker/android/src/main/java/com/imagepicker/ImagePickerModuleImpl.java',
+  `import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.MediaStore;`,
+  `import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.MediaStore;`,
+);
+
+patchTextInFile(
+  'node_modules/react-native-image-picker/android/src/main/java/com/imagepicker/ImagePickerModuleImpl.java',
+  `            file = createFile(reactContext, "mp4");
+            cameraCaptureURI = createUri(file, reactContext);
+        } else {
+            requestCode = REQUEST_LAUNCH_IMAGE_CAPTURE;
+            cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            file = createFile(reactContext, "jpg");
+            cameraCaptureURI = createUri(file, reactContext);
+        }
+
+        if (this.options.useFrontCamera) {`,
+  `            file = createFile(reactContext, "mp4");
+        } else {
+            requestCode = REQUEST_LAUNCH_IMAGE_CAPTURE;
+            cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            file = createFile(reactContext, "jpg");
+        }
+
+        if (file == null) {
+            callback.invoke(getErrorMap(errOthers, "Could not create image file"));
+            this.callback = null;
+            return;
+        }
+
+        cameraCaptureURI = createUri(file, reactContext);
+
+        if (this.options.useFrontCamera) {`,
+);
+
+patchTextInFile(
+  'node_modules/react-native-image-picker/android/src/main/java/com/imagepicker/ImagePickerModuleImpl.java',
+  `        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraCaptureURI);
+        cameraIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+        try {
+            currentActivity.startActivityForResult(cameraIntent, requestCode);`,
+  `        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraCaptureURI);
+        cameraIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+        List<ResolveInfo> resolvedActivities = currentActivity.getPackageManager().queryIntentActivities(cameraIntent, PackageManager.MATCH_DEFAULT_ONLY);
+        for (ResolveInfo resolvedActivityInfo : resolvedActivities) {
+            String packageName = resolvedActivityInfo.activityInfo.packageName;
+            currentActivity.grantUriPermission(
+                    packageName,
+                    cameraCaptureURI,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION
+            );
+        }
+
+        try {
+            currentActivity.startActivityForResult(cameraIntent, requestCode);`,
+);
+
+patchTextInFile(
+  'node_modules/react-native-image-picker/android/src/main/java/com/imagepicker/ImagePickerModuleImpl.java',
+  `                onAssetsObtained(Collections.singletonList(fileUri));
+                break;
+
+            case REQUEST_LAUNCH_LIBRARY:`,
+  `                onAssetsObtained(Collections.singletonList(cameraCaptureURI != null ? cameraCaptureURI : fileUri));
+                break;
+
+            case REQUEST_LAUNCH_LIBRARY:`,
 );
 
 patchTextInFile(

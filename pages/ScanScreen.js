@@ -2,28 +2,31 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  ImageBackground,
   Modal,
-  PermissionsAndroid,
   Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
+import { launchImageLibrary } from 'react-native-image-picker';
 import {
-  launchCamera,
-  launchImageLibrary,
-} from 'react-native-image-picker';
+  Camera,
+  useCameraDevice,
+  useCodeScanner,
+} from 'react-native-vision-camera';
 import RNFetchBlob from 'rn-fetch-blob';
 import { connect } from 'react-redux';
-import { QRreader } from 'react-native-qr-decode-image-camera';
+import {
+  decodeQrFromBase64,
+  decodeQrFromUri,
+} from '../src/qrImageReader';
 import Colors from '../src/Colors';
 import { FontSize } from '../components/FontSizeHelper';
 import { Language } from '../translations/I18n';
 import { Base64 } from '../src/safe_Format';
 
-const backgroundImage = require('../images/UI/Asset35.png');
 const EMPTY_QR_ERROR = {
   title: '',
   detail: '',
@@ -32,38 +35,21 @@ const QR_DECODE_TIMEOUT_MS = 6000;
 const QR_DECODE_OVERALL_TIMEOUT_MS = 15000;
 const QR_FILE_READY_RETRIES = 6;
 const QR_FILE_READY_DELAY_MS = 150;
+const QR_LOG_TAG = '[ScanScreen][QrDecode]';
 const PICKER_OPTIONS = {
   mediaType: 'photo',
-  maxWidth: 1200,
-  maxHeight: 1200,
-  quality: 0.85,
-  includeBase64: false,
+  maxWidth: 1024,
+  maxHeight: 1024,
+  quality: 0.92,
+  includeBase64: true,
 };
 
-const requestCameraPermission = async () => {
-  if (Platform.OS !== 'android') {
-    return true;
-  }
-  try {
-    const alreadyGranted = await PermissionsAndroid.check(
-      PermissionsAndroid.PERMISSIONS.CAMERA,
-    );
-    if (alreadyGranted) {
-      return true;
-    }
-    const result = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.CAMERA,
-      {
-        title: Language.t('selectBase.scanQR'),
-        message: Language.t('selectBase.scanQR'),
-        buttonPositive: Language.t('alert.ok'),
-      },
-    );
-    return result === PermissionsAndroid.RESULTS.GRANTED;
-  } catch (error) {
-    console.error('[ScanScreen] camera permission error =', error);
-    return false;
-  }
+const qrFlowLog = (step, detail) => {
+  const payload =
+    detail === undefined
+      ? ''
+      : ` ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`;
+  console.log(`${QR_LOG_TAG} ${step}${payload}`);
 };
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -127,11 +113,42 @@ const addQrSourceCandidate = (candidates, value) => {
   candidates.push(value);
 };
 
+const isAccessibleQrSource = value => {
+  if (!value) {
+    return false;
+  }
+  if (value.startsWith('content://')) {
+    return true;
+  }
+  if (
+    value.includes('rn_image_picker_lib_temp') ||
+    value.includes('/cache/') ||
+    value.includes('/com.bplusexecutive/')
+  ) {
+    return true;
+  }
+  if (
+    Platform.OS === 'android' &&
+    (value.includes('/storage/emulated/') || value.includes('/DCIM/'))
+  ) {
+    return false;
+  }
+  return value.startsWith('file://') || value.startsWith('/');
+};
+
 const getQrSourceCandidates = asset => {
   const candidates = [];
-  addQrSourceCandidate(candidates, asset.uri);
-  addQrSourceCandidate(candidates, asset.originalPath);
-  addQrSourceCandidate(candidates, asset.path);
+  const sources =
+    Platform.OS === 'android'
+      ? [asset.uri]
+      : [asset.uri, asset.originalPath, asset.path];
+
+  for (const source of sources) {
+    if (isAccessibleQrSource(source)) {
+      addQrSourceCandidate(candidates, source);
+    }
+  }
+
   return [...new Set(candidates.filter(Boolean))];
 };
 
@@ -171,28 +188,81 @@ const withTimeout = (promise, timeoutMs) =>
   ]);
 
 const decodeImageData = async asset => {
+  const flowStartedAt = Date.now();
   const attemptErrors = [];
   let lastError = null;
-  const candidates = getQrSourceCandidates(asset);
+  const attempts = [];
 
-  if (candidates.length > 0) {
-    await waitForReadableAsset(asset, candidates);
-    for (const candidate of candidates) {
-      try {
-        const data = await withTimeout(QRreader(candidate), QR_DECODE_TIMEOUT_MS);
-        if (data) {
-          return data;
-        }
-        attemptErrors.push(`${candidate} -> empty result`);
-      } catch (error) {
-        lastError = error;
-        attemptErrors.push(`${candidate} -> ${getErrorMessage(error)}`);
-        console.error('[ScanScreen] qrCandidateError =', candidate, error);
+  qrFlowLog('decodeImageData:start', {
+    hasBase64: Boolean(asset?.base64),
+    base64Length: asset?.base64?.length || 0,
+    uri: asset?.uri || null,
+    path: asset?.path || null,
+    originalPath: asset?.originalPath || null,
+  });
+
+  if (asset?.base64) {
+    attempts.push({
+      label: 'base64',
+      run: () => decodeQrFromBase64(asset.base64),
+    });
+  } else {
+    const candidates = getQrSourceCandidates(asset);
+    if (candidates.length > 0) {
+      qrFlowLog('waitForReadableAsset:start', { candidates });
+      const waitStartedAt = Date.now();
+      await waitForReadableAsset(asset, candidates);
+      qrFlowLog('waitForReadableAsset:done', { ms: Date.now() - waitStartedAt });
+      for (const candidate of candidates) {
+        attempts.push({
+          label: candidate,
+          run: () => decodeQrFromUri(candidate),
+        });
       }
+    } else {
+      attemptErrors.push('no base64 or accessible uri available');
     }
-  } else if (!asset?.uri && !asset?.originalPath && !asset?.path) {
-    attemptErrors.push('no uri available');
   }
+
+  qrFlowLog('attempts:queued', {
+    count: attempts.length,
+    labels: attempts.map(item => item.label),
+  });
+
+  for (const attempt of attempts) {
+    const attemptStartedAt = Date.now();
+    qrFlowLog('attempt:start', { label: attempt.label });
+    try {
+      const data = await withTimeout(attempt.run(), QR_DECODE_TIMEOUT_MS);
+      if (data) {
+        qrFlowLog('attempt:success', {
+          label: attempt.label,
+          ms: Date.now() - attemptStartedAt,
+          totalMs: Date.now() - flowStartedAt,
+        });
+        return data;
+      }
+      attemptErrors.push(`${attempt.label} -> empty result`);
+      qrFlowLog('attempt:empty', {
+        label: attempt.label,
+        ms: Date.now() - attemptStartedAt,
+      });
+    } catch (error) {
+      lastError = error;
+      attemptErrors.push(`${attempt.label} -> ${getErrorMessage(error)}`);
+      qrFlowLog('attempt:error', {
+        label: attempt.label,
+        message: getErrorMessage(error),
+        ms: Date.now() - attemptStartedAt,
+      });
+      console.error('[ScanScreen] qrCandidateError =', attempt.label, error);
+    }
+  }
+
+  qrFlowLog('decodeImageData:failed', {
+    totalMs: Date.now() - flowStartedAt,
+    attemptErrors,
+  });
 
   const error = lastError || new Error('QR_NOT_FOUND');
   error.attemptDetails = attemptErrors;
@@ -321,17 +391,32 @@ const decodePayloadCandidates = data => {
 const ScanScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [qrError, setQrError] = useState(EMPTY_QR_ERROR);
+  const [cameraPermission, setCameraPermission] = useState('not-determined');
+  const [isScanning, setIsScanning] = useState(true);
+  const isFocused = useIsFocused();
   const isMountedRef = useRef(true);
   const loadingRef = useRef(false);
+  const isScanningRef = useRef(true);
+  const device = useCameraDevice('back');
 
   useEffect(() => {
     isMountedRef.current = true;
     loadingRef.current = false;
     setLoading(false);
 
+    const requestPermission = async () => {
+      const status = await Camera.requestCameraPermission();
+      if (isMountedRef.current) {
+        setCameraPermission(status);
+      }
+    };
+    requestPermission();
+
     const unsubscribe = navigation.addListener('focus', () => {
       loadingRef.current = false;
+      isScanningRef.current = true;
       setLoading(false);
+      setIsScanning(true);
     });
 
     return () => {
@@ -344,6 +429,8 @@ const ScanScreen = ({ navigation, route }) => {
 
   const closeQrError = () => {
     setQrError(EMPTY_QR_ERROR);
+    isScanningRef.current = true;
+    setIsScanning(true);
   };
 
   const openQrError = (title, detail) => {
@@ -432,11 +519,35 @@ const ScanScreen = ({ navigation, route }) => {
     navigation.navigate(route.params?.route || 'SelectScreen', navigationPayload);
   };
 
+  const codeScanner = useCodeScanner({
+    codeTypes: ['qr'],
+    onCodeScanned: codes => {
+      if (!isScanningRef.current || loadingRef.current) {
+        return;
+      }
+      const value = codes[0]?.value;
+      if (!value) {
+        return;
+      }
+      isScanningRef.current = false;
+      setIsScanning(false);
+      parseQrPayload(value);
+    },
+  });
+
+  const cameraActive =
+    isFocused && isScanning && !loading && !qrError.detail && cameraPermission === 'granted';
+
   const decodeImage = async asset => {
     if (!asset) {
       return;
     }
-    if (!asset.uri && !asset.originalPath && !asset.path) {
+    if (
+      !asset.base64 &&
+      !asset.uri &&
+      !asset.originalPath &&
+      !asset.path
+    ) {
       openQrError(
         Language.t('alert.errorTitle'),
         `${Language.t('selectBase.notfound')}\n\nNo image data returned from picker`,
@@ -445,13 +556,20 @@ const ScanScreen = ({ navigation, route }) => {
     }
     closeQrError();
     setLoadingSafe(true);
+    const decodeStartedAt = Date.now();
+    qrFlowLog('decodeImage:start');
     try {
       const data = await withTimeout(
         decodeImageData(asset),
         QR_DECODE_OVERALL_TIMEOUT_MS,
       );
+      qrFlowLog('decodeImage:success', { ms: Date.now() - decodeStartedAt });
       parseQrPayload(data);
     } catch (error) {
+      qrFlowLog('decodeImage:error', {
+        ms: Date.now() - decodeStartedAt,
+        message: getErrorMessage(error),
+      });
       console.error('[ScanScreen] decodeImage error =', error);
       const attemptDetails = Array.isArray(error?.attemptDetails)
         ? error.attemptDetails.join('\n')
@@ -479,14 +597,6 @@ const ScanScreen = ({ navigation, route }) => {
       let message = response.errorMessage || response.errorCode;
       if (response.errorCode === 'permission') {
         message = Language.t('selectBase.scanQR');
-      } else if (response.errorCode === 'camera_unavailable') {
-        message = Language.t('selectBase.notfound');
-      } else if (
-        response.errorCode === 'others' &&
-        typeof message === 'string' &&
-        message.toLowerCase().includes('camera')
-      ) {
-        message = Language.t('selectBase.scanQR');
       }
       openQrError(Language.t('alert.errorTitle'), message);
       return;
@@ -502,35 +612,6 @@ const ScanScreen = ({ navigation, route }) => {
     decodeImage(asset);
   };
 
-  const openCamera = async () => {
-    closeQrError();
-    if (loadingRef.current) {
-      setLoadingSafe(false);
-    }
-
-    const hasPermission = await requestCameraPermission();
-    if (!hasPermission) {
-      openQrError(
-        Language.t('alert.errorTitle'),
-        Language.t('selectBase.scanQR'),
-      );
-      return;
-    }
-
-    try {
-      const response = await launchCamera({
-        ...PICKER_OPTIONS,
-        cameraType: 'back',
-        saveToPhotos: false,
-      });
-      console.log('[ScanScreen] launchCamera response =', response?.errorCode || 'ok');
-      handleImagePickerResponse(response);
-    } catch (error) {
-      console.error('[ScanScreen] launchCamera error =', error);
-      openQrError(Language.t('alert.errorTitle'), getErrorMessage(error));
-    }
-  };
-
   const chooseFile = async () => {
     closeQrError();
     if (loadingRef.current) {
@@ -538,11 +619,18 @@ const ScanScreen = ({ navigation, route }) => {
     }
 
     try {
+      qrFlowLog('launchImageLibrary:start');
+      const pickerStartedAt = Date.now();
       const response = await launchImageLibrary({
         ...PICKER_OPTIONS,
         selectionLimit: 1,
       });
-      console.log('[ScanScreen] launchImageLibrary response =', response?.errorCode || 'ok');
+      qrFlowLog('launchImageLibrary:done', {
+        ms: Date.now() - pickerStartedAt,
+        didCancel: Boolean(response.didCancel),
+        errorCode: response.errorCode || null,
+        assetCount: response.assets?.length || 0,
+      });
       handleImagePickerResponse(response);
     } catch (error) {
       console.error('[ScanScreen] launchImageLibrary error =', error);
@@ -551,55 +639,48 @@ const ScanScreen = ({ navigation, route }) => {
   };
 
   return (
-    <ImageBackground
-      source={backgroundImage}
-      resizeMode="cover"
-      style={styles.page}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Image
-            style={styles.backIcon}
-            resizeMode="contain"
-            source={require('../img/iconsMenu/arrow.png')}
-          />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>{Language.t('selectBase.scanQR')}</Text>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.card}>
-          <Image
-            style={styles.heroIcon}
-            resizeMode="contain"
-            source={require('../img/iconsMenu/qr-code.png')}
-          />
-          <Text style={styles.title}>{Language.t('selectBase.scanQR')}</Text>
-          <Text style={styles.subtitle}>
-            {Language.t('selectBase.SelectImg')}
+    <View style={styles.page}>
+      {device != null && cameraPermission === 'granted' ? (
+        <Camera
+          style={StyleSheet.absoluteFill}
+          device={device}
+          isActive={cameraActive}
+          codeScanner={codeScanner}
+        />
+      ) : (
+        <View style={styles.permissionFallback}>
+          <Text style={styles.permissionText}>
+            {cameraPermission === 'denied'
+              ? Language.t('selectBase.scanQR')
+              : Language.t('selectBase.scanQR')}
           </Text>
+        </View>
+      )}
 
+      <View style={styles.overlay} pointerEvents="box-none">
+        <View style={styles.topBar}>
           <TouchableOpacity
-            style={[styles.primaryButton, loading && styles.buttonDisabled]}
-            onPress={openCamera}
+            onPress={() => navigation.goBack()}
+            style={styles.topButton}
           >
-            <Text style={styles.primaryButtonText}>
-              {Language.t('selectBase.scanQR')}
-            </Text>
+            <Image
+              style={styles.backIcon}
+              resizeMode="contain"
+              source={require('../img/iconsMenu/arrow.png')}
+            />
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.secondaryButton, loading && styles.buttonDisabled]}
-            onPress={chooseFile}
-          >
-            <Text style={styles.secondaryButtonText}>
+          <TouchableOpacity onPress={chooseFile} style={styles.galleryButton}>
+            <Text style={styles.galleryButtonText}>
               {Language.t('selectBase.SelectImg')}
             </Text>
           </TouchableOpacity>
         </View>
+
+        {device != null && cameraPermission === 'granted' ? (
+          <View style={styles.markerContainer} pointerEvents="none">
+            <View style={styles.marker} />
+          </View>
+        ) : null}
       </View>
 
       <Modal
@@ -636,89 +717,69 @@ const ScanScreen = ({ navigation, route }) => {
           </View>
         </View>
       </Modal>
-    </ImageBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   page: {
     flex: 1,
+    backgroundColor: '#000000',
   },
-  header: {
-    height: 70,
-    paddingHorizontal: 20,
-    paddingTop: 12,
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'space-between',
+  },
+  permissionFallback: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
-    backgroundColor: '#223fc9',
-    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
   },
-  backButton: {
-    marginRight: 12,
+  permissionText: {
+    color: '#ffffff',
+    fontSize: FontSize.medium,
+    textAlign: 'center',
+  },
+  markerContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  marker: {
+    width: 220,
+    height: 220,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 12,
+    backgroundColor: 'transparent',
+  },
+  topBar: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingTop: 12,
+  },
+  topButton: {
+    padding: 8,
   },
   backIcon: {
     width: FontSize.large,
     height: FontSize.large,
+    tintColor: '#ffffff',
   },
-  headerText: {
-    color: Colors.backgroundLoginColorSecondary,
-    fontSize: FontSize.medium,
+  galleryButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.9)',
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  card: {
-    borderRadius: 18,
-    padding: 24,
-    backgroundColor: 'rgba(255,255,255,0.94)',
-    alignItems: 'center',
-  },
-  heroIcon: {
-    width: 84,
-    height: 84,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: FontSize.large,
-    fontWeight: 'bold',
+  galleryButtonText: {
+    fontSize: FontSize.small,
+    fontWeight: '600',
     color: Colors.fontColor,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: FontSize.medium,
-    color: Colors.fontColorSecondary,
-    marginBottom: 24,
-  },
-  primaryButton: {
-    width: '100%',
-    borderRadius: 12,
-    paddingVertical: 14,
-    backgroundColor: Colors.buttonColorPrimary,
-    marginBottom: 12,
-  },
-  secondaryButton: {
-    width: '100%',
-    borderRadius: 12,
-    paddingVertical: 14,
-    backgroundColor: Colors.backgroundColorSecondary,
-    borderWidth: 1,
-    borderColor: Colors.buttonColorPrimary,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  primaryButtonText: {
-    textAlign: 'center',
-    fontSize: FontSize.medium,
-    fontWeight: 'bold',
-    color: Colors.buttonTextColor,
-  },
-  secondaryButtonText: {
-    textAlign: 'center',
-    fontSize: FontSize.medium,
-    fontWeight: 'bold',
-    color: Colors.buttonColorPrimary,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
