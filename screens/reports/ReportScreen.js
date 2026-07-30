@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View, TextInput, Dimensions, Text, Platform, Image, ImageBackground, ActivityIndicator, Alert, StatusBar, KeyboardAvoidingView, BackHandler, ScrollView, TouchableNativeFeedback, TouchableOpacity, Pressable, PermissionsAndroid } from 'react-native';
 import { useStateIfMounted } from 'use-state-if-mounted';
 import { connect } from 'react-redux';
@@ -35,12 +35,42 @@ let clockCall = null;
 const defaultCountDown = -1;
 const REPORT_PICKER_FONT = FontSize.medium;
 const LOG_TAG = '[ReportScreen]';
+const PRINT_STATUS_LABEL = {
+  '0': 'กำลังประมวลผล/รอคิว',
+  '1': 'สำเร็จ - พร้อมดาวน์โหลด',
+  '7': 'ยกเลิก',
+  '8': 'ยกเลิก',
+};
+const getPrintStatusLabel = status =>
+  PRINT_STATUS_LABEL[String(status)] || `สถานะอื่น (${status})`;
 const reportLog = (step, detail) => {
   const payload =
     detail === undefined
       ? ''
       : ` ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`;
   console.log(`${LOG_TAG} ${step}${payload}`);
+};
+const reportFlow = (phase, message, detail) => {
+  if (detail === undefined || detail === null || detail === '') {
+    console.log(`${LOG_TAG}[${phase}] ${message}`);
+    return;
+  }
+  if (typeof detail === 'string') {
+    console.log(`${LOG_TAG}[${phase}] ${message} | ${detail}`);
+    return;
+  }
+  console.log(`${LOG_TAG}[${phase}] ${message}`, detail);
+};
+const logPrintStatusItem = (item, pollNumber) => {
+  const status = String(item?.RPTQUE_RSLT_STATUS ?? '');
+  const pdfPath = item?.RPTQUE_RSLT_PATH || '';
+  const serverMessage =
+    item?.SYSLKUP_T_DESC || item?.RPTQUE_RSLT_MESSAGE || '-';
+  reportFlow(
+    'STEP2_STATUS',
+    `poll #${pollNumber} ผลลัพธ์`,
+    `status=${status} (${getPrintStatusLabel(status)}) | server=${serverMessage} | pdf=${pdfPath || 'ยังไม่มี'}`,
+  );
 };
 const ReportSelectRow = props => <View style={{
   marginTop: 10,
@@ -83,6 +113,7 @@ const ReportScreen = ({
   const [countdown, setCountdown] = useState(defaultCountDown);
   const [recon, setRecon] = useState('');
   const [GETPRINTSTATUS, setGETPRINTSTATUS] = useState([]);
+  const pollCountRef = useRef(0);
   useEffect(() => {
     reportLog('mount:start');
     fetchData();
@@ -132,12 +163,17 @@ const ReportScreen = ({
   })), [filteredReports]);
   const decrementClock = () => {
     if (countdown === 0) {
+      reportFlow('POLL', 'หมดเวลารอ server', `recon=${recon}`);
       reportLog('countdown:timeout', { recon });
       setCountdown(0);
       clearInterval(clockCall);
     } else if (countdown === 16) {
+      reportFlow('POLL', 'ถึงเวลาถามสถานะอีกครั้ง', `recon=${recon}`);
       reportLog('countdown:poll', { recon, kye_token });
       connectAgain();
+    } else if (countdown === 17 || countdown === 18) {
+      reportFlow('POLL', `รอ poll อีก ${countdown} วินาที`);
+      setCountdown(countdown - 1);
     } else {
       setCountdown(countdown - 1);
     }
@@ -155,6 +191,7 @@ const ReportScreen = ({
     }
   }, [countdown]);
   const connectAgain = () => {
+    reportFlow('POLL', 'connectAgain', `recon=${recon}`);
     reportLog('connectAgain', { recon });
     if (recon == 'fetchData') fetchData();else if (recon == 'PushPRINTREPORT') PushPRINTREPORT();else if (recon == 'fetchDataStatus') fetchDataStatus(kye_token);else setLoading(false);
   };
@@ -252,6 +289,11 @@ const ReportScreen = ({
     sDate = parseInt(sDate);
     let eDate = safe_Format.setnewdateF(end_date);
     if (printItem.RPTSVR_RPF_DD_FIELD == 'ANYDATE') eDate = sDate;else eDate = parseInt(eDate);
+    reportFlow(
+      'STEP1_PRINT',
+      'ส่งคำสั่งพิมพ์ → PRINTREPORT',
+      `report=${tempprintItem.RPTSVR_NAME || '-'} | guid=${tempprintItem.RPTSVR_GUID || '-'} | from=${sDate} | to=${eDate}`,
+    );
     reportLog('PushPRINTREPORT:start', {
       report: {
         guid: tempprintItem.RPTSVR_GUID,
@@ -263,6 +305,7 @@ const ReportScreen = ({
       typeCode,
     });
     if (sDate > eDate) {
+      reportFlow('STEP1_PRINT', 'ล้มเหลว - วันที่ไม่ถูกต้อง', `from=${sDate} to=${eDate}`);
       reportLog('PushPRINTREPORT:invalidDate', { sDate, eDate });
       Alert.alert(Language.t('report.Failed'), Language.t('report.FailedInfo'), [{
         text: Language.t('alert.ok'),
@@ -295,12 +338,23 @@ const ReportScreen = ({
         let responseData = JSON.parse(json.ResponseData);
         let tempRPTSVR_DATA = activityReducer.RPTSVR_DATA;
         if (json.ResponseCode == 200) {
+          pollCountRef.current = 0;
+          reportFlow(
+            'STEP1_PRINT',
+            'สำเร็จ - ได้คิวงาน',
+            `RPTQUE_GUID=${responseData.RPTQUE_GUID || '-'} | RPTQUE_KEY=${responseData.RPTQUE_KEY || '-'}`,
+          );
           reportLog('PushPRINTREPORT:queued', responseData);
           tempRPTSVR_DATA.push(responseData);
           dispatch(activityActions.RPTSVR_DATA(tempRPTSVR_DATA));
           setGETPRINTSTATUS([]);
           fetchDataStatus(responseData);
         } else {
+          reportFlow(
+            'STEP1_PRINT',
+            'ล้มเหลว',
+            `ResponseCode=${json.ResponseCode} | ${json.ReasonString || '-'}`,
+          );
           reportLog('PushPRINTREPORT:failed', json);
           setLoading(false);
           Alert.alert(Language.t('notiAlert.header'), `${Language.t('report.Failed')} ${json.ReasonString}`, [{
@@ -324,6 +378,14 @@ const ReportScreen = ({
     setCountdown(-1);
   };
   const fetchDataStatus = async itemtoken => {
+    pollCountRef.current += 1;
+    const pollNumber = pollCountRef.current;
+    const queueGuid = itemtoken?.RPTQUE_GUID || itemtoken;
+    reportFlow(
+      'STEP2_STATUS',
+      `poll #${pollNumber} ถามสถานะ → GETPRINTSTATUS`,
+      `RPTQUE_GUID=${queueGuid}`,
+    );
     reportLog('fetchDataStatus:start', {
       itemtoken,
       tokenType: typeof itemtoken,
@@ -333,7 +395,6 @@ const ReportScreen = ({
     dieSer('fetchDataStatus');
     setLoadingKind('print');
     setLoading(true);
-    const queueGuid = itemtoken?.RPTQUE_GUID || itemtoken;
     const apiUrl = databaseReducer.Data.urlser + '/RptServer';
     const requestBody = {
       'BPAPUS-BPAPSV': loginReducer.serviceID,
@@ -363,14 +424,22 @@ const ReportScreen = ({
         status: responseData.GETPRINTSTATUS?.[0] || null,
       });
       if (responseData.RECORD_COUNT > 0) {
-        const printStatus = responseData.GETPRINTSTATUS[0].RPTQUE_RSLT_STATUS;
+        const statusItem = responseData.GETPRINTSTATUS[0];
+        const printStatus = statusItem.RPTQUE_RSLT_STATUS;
+        logPrintStatusItem(statusItem, pollNumber);
         if (printStatus == 1) {
-          reportLog('fetchDataStatus:success', responseData.GETPRINTSTATUS[0]);
+          reportFlow('STEP2_STATUS', `poll #${pollNumber} เสร็จแล้ว - ไปดาวน์โหลด PDF`);
+          reportLog('fetchDataStatus:success', statusItem);
           setGETPRINTSTATUS(responseData.GETPRINTSTATUS);
           DownloadReport(responseData.GETPRINTSTATUS[0]);
           setCountdown(-1);
           setLoading(false);
         } else if (printStatus == 0) {
+          reportFlow(
+            'POLL',
+            `poll #${pollNumber} ยังไม่เสร็จ - รอ 18 วินาที แล้วถามอีกครั้ง`,
+            getPrintStatusLabel(printStatus),
+          );
           reportLog('fetchDataStatus:processing', {
             status: printStatus,
             nextPollInSec: 18,
@@ -378,6 +447,11 @@ const ReportScreen = ({
           setCountdown(18);
           setGETPRINTSTATUS(responseData.GETPRINTSTATUS);
         } else {
+          reportFlow(
+            'STEP2_STATUS',
+            `poll #${pollNumber} จบด้วยสถานะพิเศษ`,
+            getPrintStatusLabel(printStatus),
+          );
           reportLog('fetchDataStatus:terminal', { status: printStatus });
           setCountdown(-1);
           setLoading(false);
@@ -388,6 +462,11 @@ const ReportScreen = ({
           }]);
         }
       } else {
+        reportFlow(
+          'STEP2_STATUS',
+          `poll #${pollNumber} ไม่มีข้อมูล RECORD_COUNT=0 - ลองถามอีกครั้ง`,
+          `RPTQUE_GUID=${queueGuid}`,
+        );
         reportLog('fetchDataStatus:emptyRecord', {
           queueGuid,
           retryWith: itemtoken?.RPTQUE_GUID || itemtoken,
@@ -407,6 +486,12 @@ const ReportScreen = ({
     });
   };
   const DownloadReport = async tempItem => {
+    const savePathPreview = tempItem?.RPTQUE_RSLT_PATH || '-';
+    reportFlow(
+      'STEP3_DOWNLOAD',
+      'เริ่มดาวน์โหลด PDF → DownloadFile',
+      `fileName=${savePathPreview}`,
+    );
     reportLog('DownloadReport:start', tempItem);
     dieSer('DownloadReport');
     setGETPRINTSTATUS([]);
@@ -419,6 +504,7 @@ const ReportScreen = ({
     });
     reportLog('DownloadReport:permission', { permission });
     if (permission === 'denied') {
+      reportFlow('STEP3_DOWNLOAD', 'ล้มเหลว - ไม่ได้รับ permission storage');
       reportLog('DownloadReport:permissionDenied');
       setLoading(false);
       return;
@@ -455,6 +541,7 @@ const ReportScreen = ({
       notification: true
     }).fetch('GET', downloadUrl, downloadHeaders).then(res => {
       base64 = res.path();
+      reportFlow('STEP3_DOWNLOAD', 'สำเร็จ - เปิด PDF', `path=${base64}`);
       reportLog('DownloadReport:success', {
         ms: Date.now() - startedAt,
         path: base64,
@@ -576,6 +663,11 @@ const ReportScreen = ({
                   marginTop: FontSize.large
                 }}>
                     {filteredReports.length > 0 ? <TouchableOpacity style={[styles.button, styles.buttonClose]} onPress={() => {
+                    reportFlow(
+                      'UI',
+                      'กดพิมพ์',
+                      printItem.RPTSVR_NAME || REPORTNAME[0]?.RPTSVR_NAME || '-',
+                    );
                     reportLog('printButton:pressed', {
                       name: printItem.RPTSVR_NAME || REPORTNAME[0]?.RPTSVR_NAME,
                       guid: printItem.RPTSVR_GUID,
@@ -583,6 +675,7 @@ const ReportScreen = ({
                     Alert.alert(Language.t('notiAlert.header'), `${Language.t('report.doPrint')} ${printItem.RPTSVR_NAME ? printItem.RPTSVR_NAME : REPORTNAME[0].RPTSVR_NAME} ${Language.t('report.YorN')}`, [{
                       text: Language.t('selectBase.yes'),
                       onPress: () => {
+                        reportFlow('UI', 'ยืนยันพิมพ์');
                         reportLog('printButton:confirmed');
                         PushPRINTREPORT();
                       }

@@ -181,6 +181,13 @@ const SelectBase = ({
     const match = pickerOptions.find(o => o.value === selectbaseValue);
     return match?.label ?? Language.t('selectBase.lebel');
   };
+  const toggleTapPicker = (pickerId, enabled) => {
+    if (!enabled) {
+      return;
+    }
+    setLanguageDropdownOpen(false);
+    setOpenPicker(openPicker === pickerId ? null : pickerId);
+  };
   const renderTapPicker = ({
     pickerId,
     displayLabel,
@@ -188,50 +195,35 @@ const SelectBase = ({
     onValueChange,
     enabled = true,
     compact = false,
-    modalTitle,
     options = []
-  }) => <>
-      <TouchableOpacity disabled={!enabled} activeOpacity={0.7} style={[styles.pickerTrigger, compact && styles.pickerTriggerCompact, !enabled && styles.pickerTriggerDisabled]} onPress={() => {
-        if (enabled) {
-          setLanguageDropdownOpen(false);
-          setOpenPicker(pickerId);
-        }
-      }}>
-        <Text style={[styles.pickerTriggerText, compact && styles.pickerTriggerTextCompact]} numberOfLines={1}>
-          {displayLabel}
-        </Text>
-        <Text style={[styles.pickerChevron, compact && styles.pickerTriggerTextCompact]}>
-          ▼
-        </Text>
-      </TouchableOpacity>
-      <Modal visible={openPicker === pickerId} transparent animationType="slide" presentationStyle="overFullScreen" onRequestClose={() => setOpenPicker(null)}>
-        <Pressable style={styles.pickerModalOverlay} onPress={() => setOpenPicker(null)}>
-          <Pressable style={[styles.pickerModalSheet, {
-          paddingBottom: Math.max(insets.bottom, 12)
-        }]} onPress={e => e.stopPropagation()}>
-            {modalTitle ? <Text style={styles.pickerModalTitle}>{modalTitle}</Text> : null}
-            <ScrollView style={styles.pickerModalList} keyboardShouldPersistTaps="handled">
+  }) => {
+    const isOpen = openPicker === pickerId;
+    return <View style={styles.pickerDropListContainer}>
+        <TouchableOpacity disabled={!enabled} activeOpacity={0.7} style={[styles.pickerTrigger, compact && styles.pickerTriggerCompact, !enabled && styles.pickerTriggerDisabled, isOpen && styles.pickerTriggerOpen]} onPress={() => toggleTapPicker(pickerId, enabled)}>
+          <Text style={[styles.pickerTriggerText, compact && styles.pickerTriggerTextCompact]} numberOfLines={1}>
+            {displayLabel}
+          </Text>
+          <Text style={[styles.pickerChevron, compact && styles.pickerTriggerTextCompact]}>
+            {isOpen ? '▲' : '▼'}
+          </Text>
+        </TouchableOpacity>
+        {isOpen && enabled ? <View style={styles.pickerDropList}>
+            <ScrollView style={styles.pickerDropListScroll} nestedScrollEnabled keyboardShouldPersistTaps="handled">
               {options.map(option => {
-              const selected = option.value === selectedValue;
-              return <TouchableOpacity key={String(option.value)} style={[styles.pickerModalRow, selected && styles.pickerModalRowSelected]} onPress={() => {
-                setOpenPicker(null);
-                onValueChange(option.value);
-              }}>
-                    <Text style={[styles.pickerModalRowText, selected && styles.pickerModalRowTextSelected]}>
+            const selected = option.value === selectedValue;
+            return <TouchableOpacity key={String(option.value)} activeOpacity={0.7} style={[styles.pickerDropListItem, selected && styles.pickerDropListItemSelected]} onPress={() => {
+              setOpenPicker(null);
+              onValueChange(option.value);
+            }}>
+                    <Text style={[styles.pickerDropListItemText, selected && styles.pickerDropListItemTextSelected]}>
                       {option.label}
                     </Text>
                   </TouchableOpacity>;
-            })}
+          })}
             </ScrollView>
-            <TouchableOpacity style={styles.pickerModalCancel} onPress={() => setOpenPicker(null)}>
-              <Text style={styles.pickerModalCancelText}>
-                {Language.t('alert.cancel')}
-              </Text>
-            </TouchableOpacity>
-          </Pressable>
-        </Pressable>
-      </Modal>
-    </>;
+          </View> : null}
+      </View>;
+  };
   var a = 0;
   const updateSecureTextEntry = () => {
     setData({
@@ -685,7 +677,6 @@ const SelectBase = ({
                 pickerId: 'base',
                 displayLabel: getBaseDisplayLabel(),
                 selectedValue: selectbaseValue,
-                modalTitle: Language.t('selectBase.title'),
                 onValueChange: itemValue => _onPressSelectbaseValue(itemValue),
                 options: [...pickerOptions.map(option => ({
                   label: option.label,
@@ -1100,54 +1091,50 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: Colors.buttonColorPrimary
   },
-  pickerModalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)'
+  pickerDropListContainer: {
+    zIndex: 10
   },
-  pickerModalSheet: {
+  pickerTriggerOpen: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0
+  },
+  pickerDropList: {
+    marginTop: -1,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: Colors.buttonColorPrimary,
     backgroundColor: Colors.backgroundColorSecondary,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4
   },
-  pickerModalTitle: {
-    textAlign: 'center',
-    fontSize: FontSize.medium,
-    fontWeight: 'bold',
-    color: Colors.fontColor,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.borderColor
+  pickerDropListScroll: {
+    maxHeight: 240
   },
-  pickerModalList: {
-    maxHeight: 320
-  },
-  pickerModalRow: {
+  pickerDropListItem: {
     paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.borderColor
   },
-  pickerModalRowSelected: {
+  pickerDropListItemSelected: {
     backgroundColor: Colors.backgroundColor
   },
-  pickerModalRowText: {
+  pickerDropListItemText: {
     fontSize: FontSize.medium,
     color: Colors.fontColor
   },
-  pickerModalRowTextSelected: {
+  pickerDropListItemTextSelected: {
     color: Colors.buttonColorPrimary,
     fontWeight: 'bold'
-  },
-  pickerModalCancel: {
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.borderColor
-  },
-  pickerModalCancelText: {
-    fontSize: FontSize.medium,
-    color: Colors.fontColorSecondary
   },
   image: {
     flex: 1,
