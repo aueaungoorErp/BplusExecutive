@@ -25,6 +25,9 @@ export type TeamInvoiceResult = {
   sumPrimary: number;
   sumSecondary: number;
   netAmount: number;
+  primaryCount: number;
+  secondaryCount: number;
+  hasOe304Data: boolean;
 };
 
 export function useFetchOe000304ByTeams() {
@@ -44,6 +47,7 @@ export function useFetchOe000304ByTeams() {
       const results: TeamInvoiceResult[] = [];
       try {
         for (const team of teams) {
+          const sltCode = String(team.sltCode ?? '').trim();
           const netSales = await queryClient.fetchQuery({
             queryKey: [
               'oe000304',
@@ -60,7 +64,7 @@ export function useFetchOe000304ByTeams() {
                 urlser,
                 serviceID,
                 loginGuid,
-                sltCode: team.sltCode,
+                sltCode,
                 fromDate,
                 toDate,
               }),
@@ -72,6 +76,9 @@ export function useFetchOe000304ByTeams() {
             sum302307: netSales.sumPrimary,
             sum337308: netSales.sumSecondary,
             netAmount: netSales.netAmount,
+            primaryCount: netSales.primaryCount,
+            secondaryCount: netSales.secondaryCount,
+            hasOe304Data: netSales.hasOe304Data,
           });
 
           results.push({
@@ -79,6 +86,9 @@ export function useFetchOe000304ByTeams() {
             sumPrimary: netSales.sumPrimary,
             sumSecondary: netSales.sumSecondary,
             netAmount: netSales.netAmount,
+            primaryCount: netSales.primaryCount,
+            secondaryCount: netSales.secondaryCount,
+            hasOe304Data: netSales.hasOe304Data,
           });
         }
         return results;

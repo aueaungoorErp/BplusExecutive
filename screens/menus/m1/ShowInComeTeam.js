@@ -128,7 +128,7 @@ const ShowInComeTeam = ({
       console.log('[ShowInComeTeam] parsed ResponseData', responseData);
       if (responseData.RECORD_COUNT > 0) {
         const teams = responseData.SHOWINCOMEBYSLTEAM.map(row => ({
-          sltCode: row.SLT_CODE,
+          sltCode: String(row.SLT_CODE ?? '').trim(),
           sltName: row.SLT_NAME
         }));
         let netByCode = {};
@@ -142,19 +142,30 @@ const ShowInComeTeam = ({
             teams
           });
           netByCode = Object.fromEntries(
-            oe304Results.map(result => [result.team.sltCode, result.netAmount])
+            oe304Results.map(result => [
+              result.team.sltCode,
+              result.hasOe304Data ? result.netAmount : undefined,
+            ])
           );
         } catch (oe304Error) {
           console.error('[ShowInComeTeam] Oe000304 loop error', oe304Error);
         }
         for (var i in responseData.SHOWINCOMEBYSLTEAM) {
-          const code = responseData.SHOWINCOMEBYSLTEAM[i].SLT_CODE;
+          const code = String(responseData.SHOWINCOMEBYSLTEAM[i].SLT_CODE ?? '').trim();
+          const fallbackSum = responseData.SHOWINCOMEBYSLTEAM[i].SUMSLTSELL;
+          const netAmount = netByCode[code];
           let jsonObj = {
             id: i,
             code,
             name: responseData.SHOWINCOMEBYSLTEAM[i].SLT_NAME,
-            sums: netByCode[code] ?? responseData.SHOWINCOMEBYSLTEAM[i].SUMSLTSELL
+            sums: netAmount ?? fallbackSum
           };
+          if (netAmount === undefined) {
+            console.log('[ShowInComeTeam] fallback SUMSLTSELL', {
+              code,
+              fallbackSum,
+            });
+          }
           arrayResult.push(jsonObj);
         }
       } else {

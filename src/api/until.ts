@@ -49,6 +49,9 @@ export type TeamNetSalesResult = {
   sumPrimary: number;
   sumSecondary: number;
   netAmount: number;
+  primaryCount: number;
+  secondaryCount: number;
+  hasOe304Data: boolean;
 };
 
 export const OE000304_PRIMARY_PROPERTIES = [302, 307];
@@ -95,16 +98,53 @@ export function buildOe000304Filter(
 ): string {
   return (
     ` AND DT_PROPERTIES IN (${dtProperties.join(',')})` +
-    ` AND (DI_DATE >= '${fromDate}') AND (DI_DATE <= '${toDate}')` +
+    ` AND ( DI_DATE  >='${fromDate}') AND ( DI_DATE  <='${toDate}')` +
     ` AND (TRH_KEY IN (SELECT TRH_KEY FROM TRANSTKH JOIN TRAPPROVE ON TRH_TAP_LIMIT=TAP_KEY AND TAP_APV_STATUS=2)` +
     ` OR TRH_KEY NOT IN (SELECT TRH_KEY FROM TRANSTKH JOIN TRAPPROVE ON TRH_TAP_LIMIT=TAP_KEY))` +
     ` AND DI_KEY IN (SELECT SLD_DI FROM SLDETAIL JOIN SALESMAN ON SLMN_KEY=SLD_SLMN JOIN SLTEAM ON SLT_KEY=SLMN_SLT AND SLT_CODE='${sltCode}')`
   );
 }
 
+function oe000304Rows(data: Oe000304Response): Oe000304Row[] {
+  const raw = data.Oe000304;
+  if (!raw) {
+    return [];
+  }
+  return Array.isArray(raw) ? raw : Object.values(raw);
+}
+
 export function sumAedBAmtFromOe000304(data: Oe000304Response): number {
-  const rows = data.Oe000304 ?? [];
-  return rows.reduce((total, row) => total + Number(row.AED_B_AMT ?? 0), 0);
+  return oe000304Rows(data).reduce(
+    (total, row) => total + Number(row.AED_B_AMT ?? 0),
+    0,
+  );
+}
+
+export function oe000304RecordCount(data: Oe000304Response): number {
+  const count = Number(data.RECORD_COUNT);
+  if (!Number.isNaN(count) && count > 0) {
+    return count;
+  }
+  return oe000304Rows(data).length;
+}
+
+function logOe000304Result(
+  sltCode: string,
+  round: '302-307' | '337-308',
+  dtProperties: number[],
+  filter: string,
+  data: Oe000304Response,
+) {
+  const rows = oe000304Rows(data);
+  console.log(`[ShowInComeTeam] Oe000304 result ${round}`, {
+    sltCode,
+    dtProperties,
+    filter,
+    recordCount: data.RECORD_COUNT,
+    rowCount: rows.length,
+    sumAedBAmt: sumAedBAmtFromOe000304(data),
+    rows,
+  });
 }
 
 export async function fetchShowIncomeBySlTeam({
@@ -143,7 +183,7 @@ export async function fetchOe000304ByTeam({
       'Oe000304',
       '',
       buildOe000304Filter(sltCode, fromDate, toDate, dtProperties),
-      'ORDER BY DI_DATE DESC',
+      '',
     ),
   );
 }
@@ -162,13 +202,43 @@ export async function calculateTeamNetSales(
     }),
   ]);
 
+  logOe000304Result(
+    params.sltCode,
+    '302-307',
+    OE000304_PRIMARY_PROPERTIES,
+    buildOe000304Filter(
+      params.sltCode,
+      params.fromDate,
+      params.toDate,
+      OE000304_PRIMARY_PROPERTIES,
+    ),
+    primaryData,
+  );
+  logOe000304Result(
+    params.sltCode,
+    '337-308',
+    OE000304_SECONDARY_PROPERTIES,
+    buildOe000304Filter(
+      params.sltCode,
+      params.fromDate,
+      params.toDate,
+      OE000304_SECONDARY_PROPERTIES,
+    ),
+    secondaryData,
+  );
+
   const sumPrimary = sumAedBAmtFromOe000304(primaryData);
   const sumSecondary = sumAedBAmtFromOe000304(secondaryData);
+  const primaryCount = oe000304RecordCount(primaryData);
+  const secondaryCount = oe000304RecordCount(secondaryData);
 
   return {
     sltCode: params.sltCode,
     sumPrimary,
     sumSecondary,
     netAmount: sumPrimary - sumSecondary,
+    primaryCount,
+    secondaryCount,
+    hasOe304Data: primaryCount > 0 || secondaryCount > 0,
   };
 }
