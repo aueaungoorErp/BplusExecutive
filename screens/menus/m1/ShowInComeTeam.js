@@ -15,6 +15,7 @@ import * as registerActions from '../../../src/actions/registerActions';
 import * as databaseActions from '../../../src/actions/databaseActions';
 import Colors from '../../../src/Colors';
 import * as safe_Format from '../../../src/safe_Format';
+import { useFetchOe000304ByTeams } from '../../../src/api/useTanstack';
 const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 import tableStyles from '../tableStyles';
@@ -42,6 +43,7 @@ const ShowInComeTeam = ({
   const databaseReducer = useSelector(({
     databaseReducer
   }) => databaseReducer);
+  const { fetchTeamsInvoices } = useFetchOe000304ByTeams();
   const [loading, setLoading] = useStateIfMounted(false);
   const [modalVisible, setModalVisible] = useState(true);
   const [arrayObj, setArrayObj] = useState([]);
@@ -120,7 +122,7 @@ const ShowInComeTeam = ({
     await fetch(apiUrl, {
       method: 'POST',
       body: JSON.stringify(requestBody)
-    }).then(response => response.json()).then(json => {
+    }).then(response => response.json()).then(async json => {
       console.log('[ShowInComeTeam] response', json);
       let responseData = JSON.parse(json.ResponseData);
       console.log('[ShowInComeTeam] parsed ResponseData', responseData);
@@ -133,6 +135,22 @@ const ShowInComeTeam = ({
             sums: responseData.SHOWINCOMEBYSLTEAM[i].SUMSLTSELL
           };
           arrayResult.push(jsonObj);
+        }
+        const teams = responseData.SHOWINCOMEBYSLTEAM.map(row => ({
+          sltCode: row.SLT_CODE,
+          sltName: row.SLT_NAME
+        }));
+        try {
+          await fetchTeamsInvoices({
+            urlser: databaseReducer.Data.urlser,
+            serviceID: loginReducer.serviceID,
+            loginGuid: tempGuid ? tempGuid : loginReducer.guid,
+            fromDate: sDate,
+            toDate: eDate,
+            teams
+          });
+        } catch (oe304Error) {
+          console.error('[ShowInComeTeam] Oe000304 loop error', oe304Error);
         }
       } else {
         safe_Format.alertNoData();

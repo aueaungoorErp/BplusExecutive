@@ -1,4 +1,5 @@
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PersistGate } from 'redux-persist/es/integration/react';
 import { Provider } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
@@ -75,6 +76,7 @@ import IncomeByPos from './screens/menus/m6/IncomeByPos';
 
 const LoginStack = createStackNavigator();
 const MainStack = createStackNavigator();
+const queryClient = new QueryClient();
 const App = () => {
   const LoginStackScreen = () => {
     return (
@@ -104,6 +106,7 @@ const App = () => {
 
   return (
     <Provider store={store}>
+      <QueryClientProvider client={queryClient}>
       <PersistGate loading={null} persistor={persistor}>
         <LanguageBootstrap>
         <NavigationContainer>
@@ -362,6 +365,7 @@ const App = () => {
         </NavigationContainer>
         </LanguageBootstrap>
       </PersistGate>
+      </QueryClientProvider>
     </Provider>
   );
 };
