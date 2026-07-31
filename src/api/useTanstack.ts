@@ -1,6 +1,10 @@
 import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { fetchOe000304ByTeam } from './until';
+import {
+  calculateTeamNetSales,
+  OE000304_PRIMARY_PROPERTIES,
+  OE000304_SECONDARY_PROPERTIES,
+} from './until';
 
 export type TeamRef = {
   sltCode: string;
@@ -16,6 +20,13 @@ export type FetchTeamsInvoicesParams = {
   teams: TeamRef[];
 };
 
+export type TeamInvoiceResult = {
+  team: TeamRef;
+  sumPrimary: number;
+  sumSecondary: number;
+  netAmount: number;
+};
+
 export function useFetchOe000304ByTeams() {
   const queryClient = useQueryClient();
   const [isPending, setIsPending] = useState(false);
@@ -28,15 +39,24 @@ export function useFetchOe000304ByTeams() {
       fromDate,
       toDate,
       teams,
-    }: FetchTeamsInvoicesParams) => {
+    }: FetchTeamsInvoicesParams): Promise<TeamInvoiceResult[]> => {
       setIsPending(true);
-      const results = [];
+      const results: TeamInvoiceResult[] = [];
       try {
         for (const team of teams) {
-          const data = await queryClient.fetchQuery({
-            queryKey: ['oe000304', team.sltCode, fromDate, toDate, loginGuid],
+          const netSales = await queryClient.fetchQuery({
+            queryKey: [
+              'oe000304',
+              'net',
+              team.sltCode,
+              fromDate,
+              toDate,
+              loginGuid,
+              OE000304_PRIMARY_PROPERTIES.join('-'),
+              OE000304_SECONDARY_PROPERTIES.join('-'),
+            ],
             queryFn: () =>
-              fetchOe000304ByTeam({
+              calculateTeamNetSales({
                 urlser,
                 serviceID,
                 loginGuid,
@@ -45,12 +65,21 @@ export function useFetchOe000304ByTeams() {
                 toDate,
               }),
           });
+
           console.log('[ShowInComeTeam] Oe000304', {
             sltCode: team.sltCode,
             sltName: team.sltName,
-            response: data,
+            sum302307: netSales.sumPrimary,
+            sum337308: netSales.sumSecondary,
+            netAmount: netSales.netAmount,
           });
-          results.push({ team, data });
+
+          results.push({
+            team,
+            sumPrimary: netSales.sumPrimary,
+            sumSecondary: netSales.sumSecondary,
+            netAmount: netSales.netAmount,
+          });
         }
         return results;
       } finally {

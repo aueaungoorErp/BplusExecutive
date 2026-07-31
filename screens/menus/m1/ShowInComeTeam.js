@@ -127,21 +127,13 @@ const ShowInComeTeam = ({
       let responseData = JSON.parse(json.ResponseData);
       console.log('[ShowInComeTeam] parsed ResponseData', responseData);
       if (responseData.RECORD_COUNT > 0) {
-        for (var i in responseData.SHOWINCOMEBYSLTEAM) {
-          let jsonObj = {
-            id: i,
-            code: responseData.SHOWINCOMEBYSLTEAM[i].SLT_CODE,
-            name: responseData.SHOWINCOMEBYSLTEAM[i].SLT_NAME,
-            sums: responseData.SHOWINCOMEBYSLTEAM[i].SUMSLTSELL
-          };
-          arrayResult.push(jsonObj);
-        }
         const teams = responseData.SHOWINCOMEBYSLTEAM.map(row => ({
           sltCode: row.SLT_CODE,
           sltName: row.SLT_NAME
         }));
+        let netByCode = {};
         try {
-          await fetchTeamsInvoices({
+          const oe304Results = await fetchTeamsInvoices({
             urlser: databaseReducer.Data.urlser,
             serviceID: loginReducer.serviceID,
             loginGuid: tempGuid ? tempGuid : loginReducer.guid,
@@ -149,8 +141,21 @@ const ShowInComeTeam = ({
             toDate: eDate,
             teams
           });
+          netByCode = Object.fromEntries(
+            oe304Results.map(result => [result.team.sltCode, result.netAmount])
+          );
         } catch (oe304Error) {
           console.error('[ShowInComeTeam] Oe000304 loop error', oe304Error);
+        }
+        for (var i in responseData.SHOWINCOMEBYSLTEAM) {
+          const code = responseData.SHOWINCOMEBYSLTEAM[i].SLT_CODE;
+          let jsonObj = {
+            id: i,
+            code,
+            name: responseData.SHOWINCOMEBYSLTEAM[i].SLT_NAME,
+            sums: netByCode[code] ?? responseData.SHOWINCOMEBYSLTEAM[i].SUMSLTSELL
+          };
+          arrayResult.push(jsonObj);
         }
       } else {
         safe_Format.alertNoData();
