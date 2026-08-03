@@ -28,12 +28,21 @@ export type Oe000304Params = BplusRequest & {
   dtProperties: number[];
 };
 
+export type Oe000304BySalesmanParams = BplusRequest & {
+  slmnKey?: string;
+  slmnCode?: string;
+  fromDate: string;
+  toDate: string;
+  dtProperties: number[];
+};
+
 export type ShowIncomeBySlTeamResponse = {
   RECORD_COUNT: number | string;
   SHOWINCOMEBYSLTEAM?: SlTeamRow[];
 };
 
 export type Oe000304Row = {
+  ARD_B_AMT?: string | number;
   AED_B_AMT?: string | number;
   [key: string]: unknown;
 };
@@ -46,6 +55,16 @@ export type Oe000304Response = {
 
 export type TeamNetSalesResult = {
   sltCode: string;
+  sumPrimary: number;
+  sumSecondary: number;
+  netAmount: number;
+  primaryCount: number;
+  secondaryCount: number;
+  hasOe304Data: boolean;
+};
+
+export type SalesmanNetSalesResult = {
+  slmnKey: string;
   sumPrimary: number;
   sumSecondary: number;
   netAmount: number;
@@ -90,18 +109,53 @@ async function postBplus<T>(url: string, body: Record<string, string>): Promise<
   return JSON.parse(json.ResponseData) as T;
 }
 
-export function buildOe000304Filter(
-  sltCode: string,
+function buildOe000304DateAndApprovalFilter(
   fromDate: string,
   toDate: string,
   dtProperties: number[],
+  diKeySubquery: string,
 ): string {
   return (
     ` AND DT_PROPERTIES IN (${dtProperties.join(',')})` +
     ` AND ( DI_DATE  >='${fromDate}') AND ( DI_DATE  <='${toDate}')` +
     ` AND (TRH_KEY IN (SELECT TRH_KEY FROM TRANSTKH JOIN TRAPPROVE ON TRH_TAP_LIMIT=TAP_KEY AND TAP_APV_STATUS=2)` +
     ` OR TRH_KEY NOT IN (SELECT TRH_KEY FROM TRANSTKH JOIN TRAPPROVE ON TRH_TAP_LIMIT=TAP_KEY))` +
-    ` AND DI_KEY IN (SELECT SLD_DI FROM SLDETAIL JOIN SALESMAN ON SLMN_KEY=SLD_SLMN JOIN SLTEAM ON SLT_KEY=SLMN_SLT AND SLT_CODE='${sltCode}')`
+    ` AND DI_KEY IN (${diKeySubquery})`
+  );
+}
+
+export function buildOe000304Filter(
+  sltCode: string,
+  fromDate: string,
+  toDate: string,
+  dtProperties: number[],
+): string {
+  return buildOe000304DateAndApprovalFilter(
+    fromDate,
+    toDate,
+    dtProperties,
+    `SELECT SLD_DI FROM SLDETAIL JOIN SALESMAN ON SLMN_KEY=SLD_SLMN JOIN SLTEAM ON SLT_KEY=SLMN_SLT AND SLT_CODE='${sltCode}'`,
+  );
+}
+
+export function buildOe000304FilterBySalesman(
+  slmnKey: string | undefined,
+  slmnCode: string | undefined,
+  fromDate: string,
+  toDate: string,
+  dtProperties: number[],
+): string {
+  const key = String(slmnKey ?? '').trim();
+  const code = String(slmnCode ?? '').trim();
+  const diKeySubquery = key
+    ? `SELECT SLD_DI FROM SLDETAIL WHERE SLD_SLMN='${key}'`
+    : `SELECT SLD_DI FROM SLDETAIL JOIN SALESMAN ON SLMN_KEY=SLD_SLMN AND SLMN_CODE='${code}'`;
+
+  return buildOe000304DateAndApprovalFilter(
+    fromDate,
+    toDate,
+    dtProperties,
+    diKeySubquery,
   );
 }
 
@@ -114,10 +168,10 @@ function oe000304Rows(data: Oe000304Response): Oe000304Row[] {
 }
 
 export function sumAedBAmtFromOe000304(data: Oe000304Response): number {
-  return oe000304Rows(data).reduce(
-    (total, row) => total + Number(row.AED_B_AMT ?? 0),
-    0,
-  );
+  return oe000304Rows(data).reduce((total, row) => {
+    const amount = row.ARD_B_AMT ?? row.AED_B_AMT ?? 0;
+    return total + Number(amount);
+  }, 0);
 }
 
 export function oe000304RecordCount(data: Oe000304Response): number {
@@ -129,15 +183,16 @@ export function oe000304RecordCount(data: Oe000304Response): number {
 }
 
 function logOe000304Result(
-  sltCode: string,
+  logPrefix: string,
+  entityId: string,
   round: '302-307' | '337-308',
   dtProperties: number[],
   filter: string,
   data: Oe000304Response,
 ) {
   const rows = oe000304Rows(data);
-  console.log(`[ShowInComeTeam] Oe000304 result ${round}`, {
-    sltCode,
+  console.log(`${logPrefix} Oe000304 result ${round}`, {
+    entityId,
     dtProperties,
     filter,
     recordCount: data.RECORD_COUNT,
@@ -203,6 +258,7 @@ export async function calculateTeamNetSales(
   ]);
 
   logOe000304Result(
+    '[ShowInComeTeam]',
     params.sltCode,
     '302-307',
     OE000304_PRIMARY_PROPERTIES,
@@ -215,6 +271,7 @@ export async function calculateTeamNetSales(
     primaryData,
   );
   logOe000304Result(
+    '[ShowInComeTeam]',
     params.sltCode,
     '337-308',
     OE000304_SECONDARY_PROPERTIES,
@@ -234,6 +291,98 @@ export async function calculateTeamNetSales(
 
   return {
     sltCode: params.sltCode,
+    sumPrimary,
+    sumSecondary,
+    netAmount: sumPrimary - sumSecondary,
+    primaryCount,
+    secondaryCount,
+    hasOe304Data: primaryCount > 0 || secondaryCount > 0,
+  };
+}
+
+export async function fetchOe000304BySalesman({
+  urlser,
+  serviceID,
+  loginGuid,
+  slmnKey,
+  slmnCode,
+  fromDate,
+  toDate,
+  dtProperties,
+}: Oe000304BySalesmanParams): Promise<Oe000304Response> {
+  return postBplus<Oe000304Response>(
+    `${urlser}/LookupErp`,
+    buildBplusBody(
+      serviceID,
+      loginGuid,
+      'Oe000304',
+      '',
+      buildOe000304FilterBySalesman(
+        slmnKey,
+        slmnCode,
+        fromDate,
+        toDate,
+        dtProperties,
+      ),
+      '',
+    ),
+  );
+}
+
+export async function calculateSalesmanNetSales(
+  params: Omit<Oe000304BySalesmanParams, 'dtProperties'>,
+): Promise<SalesmanNetSalesResult> {
+  const slmnKey = String(params.slmnKey ?? '').trim();
+  const slmnCode = String(params.slmnCode ?? '').trim();
+  const entityId = slmnKey || slmnCode;
+
+  const [primaryData, secondaryData] = await Promise.all([
+    fetchOe000304BySalesman({
+      ...params,
+      dtProperties: OE000304_PRIMARY_PROPERTIES,
+    }),
+    fetchOe000304BySalesman({
+      ...params,
+      dtProperties: OE000304_SECONDARY_PROPERTIES,
+    }),
+  ]);
+
+  logOe000304Result(
+    '[IncomeBySlmn]',
+    entityId,
+    '302-307',
+    OE000304_PRIMARY_PROPERTIES,
+    buildOe000304FilterBySalesman(
+      slmnKey || undefined,
+      slmnCode || undefined,
+      params.fromDate,
+      params.toDate,
+      OE000304_PRIMARY_PROPERTIES,
+    ),
+    primaryData,
+  );
+  logOe000304Result(
+    '[IncomeBySlmn]',
+    entityId,
+    '337-308',
+    OE000304_SECONDARY_PROPERTIES,
+    buildOe000304FilterBySalesman(
+      slmnKey || undefined,
+      slmnCode || undefined,
+      params.fromDate,
+      params.toDate,
+      OE000304_SECONDARY_PROPERTIES,
+    ),
+    secondaryData,
+  );
+
+  const sumPrimary = sumAedBAmtFromOe000304(primaryData);
+  const sumSecondary = sumAedBAmtFromOe000304(secondaryData);
+  const primaryCount = oe000304RecordCount(primaryData);
+  const secondaryCount = oe000304RecordCount(secondaryData);
+
+  return {
+    slmnKey: entityId,
     sumPrimary,
     sumSecondary,
     netAmount: sumPrimary - sumSecondary,

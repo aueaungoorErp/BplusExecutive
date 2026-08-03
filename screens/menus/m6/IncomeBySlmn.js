@@ -16,6 +16,7 @@ import * as databaseActions from '../../../src/actions/databaseActions';
 import Colors from '../../../src/Colors';
 import { fontSize } from 'styled-system';
 import * as safe_Format from '../../../src/safe_Format';
+import { useFetchOe000304BySalesmen } from '../../../src/api/useTanstack';
 const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 import tableStyles from '../tableStyles';
@@ -43,6 +44,7 @@ const IncomeBySlmn = ({
   const databaseReducer = useSelector(({
     databaseReducer
   }) => databaseReducer);
+  const { fetchSalesmenInvoices } = useFetchOe000304BySalesmen();
   const [loading, setLoading] = useStateIfMounted(false);
   const [modalVisible, setModalVisible] = useState(true);
   const [arrayObj, setArrayObj] = useState([]);
@@ -99,10 +101,11 @@ const IncomeBySlmn = ({
   const InCome = async () => {
     setLoading(true);
     setModalVisible(false);
-    await fetchInCome();
-    setArrayObj(arrayResult);
+    const rows = await fetchInCome();
+    setArrayObj(rows ?? []);
   };
   const fetchInCome = async tempGuid => {
+    arrayResult = [];
     var sDate = safe_Format.setnewdateF(safe_Format.checkDate(start_date));
     var eDate = safe_Format.setnewdateF(safe_Format.checkDate(end_date));
     const apiUrl = databaseReducer.Data.urlser + '/Executive';
@@ -118,28 +121,73 @@ const IncomeBySlmn = ({
     };
     console.log('[IncomeBySlmn] API', apiUrl);
     console.log('[IncomeBySlmn] request body', requestBody);
-    await fetch(apiUrl, {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    }).then(response => response.json()).then(json => {
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+      const json = await response.json();
       console.log('[IncomeBySlmn] response', json);
       let responseData = JSON.parse(json.ResponseData);
       console.log('[IncomeBySlmn] parsed ResponseData', responseData);
       if (responseData.RECORD_COUNT > 0) {
+        const salesmen = responseData.SHOWINCOMEBYSALESMAN.map(row => ({
+          slmnKey: String(row.SLMN_KEY ?? '').trim(),
+          slmnCode: String(row.SLMN_CODE ?? '').trim(),
+          slmnName: row.SLMN_NAME,
+        }));
+        let netByKey = {};
+        try {
+          const oe304Results = await fetchSalesmenInvoices({
+            urlser: databaseReducer.Data.urlser,
+            serviceID: loginReducer.serviceID,
+            loginGuid: tempGuid ? tempGuid : loginReducer.guid,
+            fromDate: sDate,
+            toDate: eDate,
+            salesmen,
+          });
+          netByKey = Object.fromEntries(
+            oe304Results.map(result => {
+              const lookupKey =
+                String(result.salesman.slmnKey ?? '').trim() ||
+                String(result.salesman.slmnCode ?? '').trim();
+              return [
+                lookupKey,
+                result.hasOe304Data ? result.netAmount : undefined,
+              ];
+            }),
+          );
+        } catch (oe304Error) {
+          console.error('[IncomeBySlmn] Oe000304 loop error', oe304Error);
+        }
         for (var i in responseData.SHOWINCOMEBYSALESMAN) {
+          const row = responseData.SHOWINCOMEBYSALESMAN[i];
+          const slmnKey = String(row.SLMN_KEY ?? '').trim();
+          const slmnCode = String(row.SLMN_CODE ?? '').trim();
+          const lookupKey = slmnKey || slmnCode;
+          const fallbackSum = row.SHOWSELLAMOUNT;
+          const netAmount = netByKey[lookupKey];
           let jsonObj = {
             id: i,
-            code: responseData.SHOWINCOMEBYSALESMAN[i].SLMN_CODE,
-            name: responseData.SHOWINCOMEBYSALESMAN[i].SLMN_NAME,
-            sellAmount: responseData.SHOWINCOMEBYSALESMAN[i].SHOWSELLAMOUNT
+            code: slmnCode,
+            name: row.SLMN_NAME,
+            sellAmount: netAmount ?? fallbackSum,
           };
+          if (netAmount === undefined) {
+            console.log('[IncomeBySlmn] fallback SHOWSELLAMOUNT', {
+              slmnKey,
+              slmnCode,
+              fallbackSum,
+            });
+          }
           arrayResult.push(jsonObj);
         }
       } else {
         safe_Format.alertNoData();
       }
       setLoading(false);
-    }).catch(error => {
+      return arrayResult;
+    } catch (error) {
       if (ser_die) {
         ser_die = false;
         regisMacAdd();
@@ -152,7 +200,8 @@ const IncomeBySlmn = ({
         setLoading(false);
       }
       console.error('ERROR at fetchContent >> ' + error);
-    });
+      return [];
+    }
   };
   const setRadio_menu1 = (index, val) => {
     const Radio_Obj = safe_Format.Radio_menu(index, val);
