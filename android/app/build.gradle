@@ -6,7 +6,7 @@ def projectRootDir = file("../../").canonicalFile
 def reactNativePackageDir = file("../../node_modules/react-native").canonicalFile
 def reactNativeCodegenDir = file("../../node_modules/@react-native/codegen").canonicalFile
 def reactNativeCliFile = file("../../node_modules/react-native/cli.js").canonicalFile
-def cmakeBuildStagingDir = file("C:/_bpe_cxx")
+def cmakeBuildStagingDir = file("${rootProject.buildDir}/.cxx")
 
 /**
  * This is the configuration block to customize your React Native Android app.
