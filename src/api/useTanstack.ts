@@ -4,7 +4,6 @@ import {
   calculateSalesmanNetSales,
   calculateTeamNetSales,
   OE000304_PRIMARY_PROPERTIES,
-  OE000304_SECONDARY_PROPERTIES,
 } from './until';
 
 export type TeamRef = {
@@ -24,10 +23,8 @@ export type FetchTeamsInvoicesParams = {
 export type TeamInvoiceResult = {
   team: TeamRef;
   sumPrimary: number;
-  sumSecondary: number;
   netAmount: number;
   primaryCount: number;
-  secondaryCount: number;
   hasOe304Data: boolean;
 };
 
@@ -58,7 +55,6 @@ export function useFetchOe000304ByTeams() {
               toDate,
               loginGuid,
               OE000304_PRIMARY_PROPERTIES.join('-'),
-              OE000304_SECONDARY_PROPERTIES.join('-'),
             ],
             queryFn: () =>
               calculateTeamNetSales({
@@ -75,20 +71,16 @@ export function useFetchOe000304ByTeams() {
             sltCode: team.sltCode,
             sltName: team.sltName,
             sum302307: netSales.sumPrimary,
-            sum337308: netSales.sumSecondary,
             netAmount: netSales.netAmount,
             primaryCount: netSales.primaryCount,
-            secondaryCount: netSales.secondaryCount,
             hasOe304Data: netSales.hasOe304Data,
           });
 
           results.push({
             team,
             sumPrimary: netSales.sumPrimary,
-            sumSecondary: netSales.sumSecondary,
             netAmount: netSales.netAmount,
             primaryCount: netSales.primaryCount,
-            secondaryCount: netSales.secondaryCount,
             hasOe304Data: netSales.hasOe304Data,
           });
         }
@@ -121,10 +113,8 @@ export type FetchSalesmenInvoicesParams = {
 export type SalesmanInvoiceResult = {
   salesman: SalesmanRef;
   sumPrimary: number;
-  sumSecondary: number;
   netAmount: number;
   primaryCount: number;
-  secondaryCount: number;
   hasOe304Data: boolean;
 };
 
@@ -157,7 +147,6 @@ export function useFetchOe000304BySalesmen() {
               toDate,
               loginGuid,
               OE000304_PRIMARY_PROPERTIES.join('-'),
-              OE000304_SECONDARY_PROPERTIES.join('-'),
             ],
             queryFn: () =>
               calculateSalesmanNetSales({
@@ -176,20 +165,16 @@ export function useFetchOe000304BySalesmen() {
             slmnCode: salesman.slmnCode,
             slmnName: salesman.slmnName,
             sum302307: netSales.sumPrimary,
-            sum337308: netSales.sumSecondary,
             netAmount: netSales.netAmount,
             primaryCount: netSales.primaryCount,
-            secondaryCount: netSales.secondaryCount,
             hasOe304Data: netSales.hasOe304Data,
           });
 
           results.push({
             salesman,
             sumPrimary: netSales.sumPrimary,
-            sumSecondary: netSales.sumSecondary,
             netAmount: netSales.netAmount,
             primaryCount: netSales.primaryCount,
-            secondaryCount: netSales.secondaryCount,
             hasOe304Data: netSales.hasOe304Data,
           });
         }

@@ -56,25 +56,20 @@ export type Oe000304Response = {
 export type TeamNetSalesResult = {
   sltCode: string;
   sumPrimary: number;
-  sumSecondary: number;
   netAmount: number;
   primaryCount: number;
-  secondaryCount: number;
   hasOe304Data: boolean;
 };
 
 export type SalesmanNetSalesResult = {
   slmnKey: string;
   sumPrimary: number;
-  sumSecondary: number;
   netAmount: number;
   primaryCount: number;
-  secondaryCount: number;
   hasOe304Data: boolean;
 };
 
 export const OE000304_PRIMARY_PROPERTIES = [302, 307];
-export const OE000304_SECONDARY_PROPERTIES = [337, 308];
 
 const buildBplusBody = (
   serviceID: string,
@@ -185,13 +180,12 @@ export function oe000304RecordCount(data: Oe000304Response): number {
 function logOe000304Result(
   logPrefix: string,
   entityId: string,
-  round: '302-307' | '337-308',
   dtProperties: number[],
   filter: string,
   data: Oe000304Response,
 ) {
   const rows = oe000304Rows(data);
-  console.log(`${logPrefix} Oe000304 result ${round}`, {
+  console.log(`${logPrefix} Oe000304 result 302-307`, {
     entityId,
     dtProperties,
     filter,
@@ -246,21 +240,14 @@ export async function fetchOe000304ByTeam({
 export async function calculateTeamNetSales(
   params: Omit<Oe000304Params, 'dtProperties'>,
 ): Promise<TeamNetSalesResult> {
-  const [primaryData, secondaryData] = await Promise.all([
-    fetchOe000304ByTeam({
-      ...params,
-      dtProperties: OE000304_PRIMARY_PROPERTIES,
-    }),
-    fetchOe000304ByTeam({
-      ...params,
-      dtProperties: OE000304_SECONDARY_PROPERTIES,
-    }),
-  ]);
+  const primaryData = await fetchOe000304ByTeam({
+    ...params,
+    dtProperties: OE000304_PRIMARY_PROPERTIES,
+  });
 
   logOe000304Result(
     '[ShowInComeTeam]',
     params.sltCode,
-    '302-307',
     OE000304_PRIMARY_PROPERTIES,
     buildOe000304Filter(
       params.sltCode,
@@ -270,33 +257,16 @@ export async function calculateTeamNetSales(
     ),
     primaryData,
   );
-  logOe000304Result(
-    '[ShowInComeTeam]',
-    params.sltCode,
-    '337-308',
-    OE000304_SECONDARY_PROPERTIES,
-    buildOe000304Filter(
-      params.sltCode,
-      params.fromDate,
-      params.toDate,
-      OE000304_SECONDARY_PROPERTIES,
-    ),
-    secondaryData,
-  );
 
   const sumPrimary = sumAedBAmtFromOe000304(primaryData);
-  const sumSecondary = sumAedBAmtFromOe000304(secondaryData);
   const primaryCount = oe000304RecordCount(primaryData);
-  const secondaryCount = oe000304RecordCount(secondaryData);
 
   return {
     sltCode: params.sltCode,
     sumPrimary,
-    sumSecondary,
-    netAmount: sumPrimary - sumSecondary,
+    netAmount: sumPrimary,
     primaryCount,
-    secondaryCount,
-    hasOe304Data: primaryCount > 0 || secondaryCount > 0,
+    hasOe304Data: primaryCount > 0,
   };
 }
 
@@ -336,21 +306,14 @@ export async function calculateSalesmanNetSales(
   const slmnCode = String(params.slmnCode ?? '').trim();
   const entityId = slmnKey || slmnCode;
 
-  const [primaryData, secondaryData] = await Promise.all([
-    fetchOe000304BySalesman({
-      ...params,
-      dtProperties: OE000304_PRIMARY_PROPERTIES,
-    }),
-    fetchOe000304BySalesman({
-      ...params,
-      dtProperties: OE000304_SECONDARY_PROPERTIES,
-    }),
-  ]);
+  const primaryData = await fetchOe000304BySalesman({
+    ...params,
+    dtProperties: OE000304_PRIMARY_PROPERTIES,
+  });
 
   logOe000304Result(
     '[IncomeBySlmn]',
     entityId,
-    '302-307',
     OE000304_PRIMARY_PROPERTIES,
     buildOe000304FilterBySalesman(
       slmnKey || undefined,
@@ -361,33 +324,15 @@ export async function calculateSalesmanNetSales(
     ),
     primaryData,
   );
-  logOe000304Result(
-    '[IncomeBySlmn]',
-    entityId,
-    '337-308',
-    OE000304_SECONDARY_PROPERTIES,
-    buildOe000304FilterBySalesman(
-      slmnKey || undefined,
-      slmnCode || undefined,
-      params.fromDate,
-      params.toDate,
-      OE000304_SECONDARY_PROPERTIES,
-    ),
-    secondaryData,
-  );
 
   const sumPrimary = sumAedBAmtFromOe000304(primaryData);
-  const sumSecondary = sumAedBAmtFromOe000304(secondaryData);
   const primaryCount = oe000304RecordCount(primaryData);
-  const secondaryCount = oe000304RecordCount(secondaryData);
 
   return {
     slmnKey: entityId,
     sumPrimary,
-    sumSecondary,
-    netAmount: sumPrimary - sumSecondary,
+    netAmount: sumPrimary,
     primaryCount,
-    secondaryCount,
-    hasOe304Data: primaryCount > 0 || secondaryCount > 0,
+    hasOe304Data: primaryCount > 0,
   };
 }
