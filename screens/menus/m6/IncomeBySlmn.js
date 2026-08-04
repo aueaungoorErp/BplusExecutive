@@ -136,9 +136,9 @@ const IncomeBySlmn = ({
           slmnCode: String(row.SLMN_CODE ?? '').trim(),
           slmnName: row.SLMN_NAME,
         }));
-        let netByKey = {};
+        let oe304Results = [];
         try {
-          const oe304Results = await fetchSalesmenInvoices({
+          oe304Results = await fetchSalesmenInvoices({
             urlser: databaseReducer.Data.urlser,
             serviceID: loginReducer.serviceID,
             loginGuid: tempGuid ? tempGuid : loginReducer.guid,
@@ -146,41 +146,21 @@ const IncomeBySlmn = ({
             toDate: eDate,
             salesmen,
           });
-          netByKey = Object.fromEntries(
-            oe304Results.map(result => {
-              const lookupKey =
-                String(result.salesman.slmnKey ?? '').trim() ||
-                String(result.salesman.slmnCode ?? '').trim();
-              return [
-                lookupKey,
-                result.hasOe304Data ? result.netAmount : undefined,
-              ];
-            }),
-          );
         } catch (oe304Error) {
           console.error('[IncomeBySlmn] Oe000304 loop error', oe304Error);
         }
-        for (var i in responseData.SHOWINCOMEBYSALESMAN) {
-          const row = responseData.SHOWINCOMEBYSALESMAN[i];
-          const slmnKey = String(row.SLMN_KEY ?? '').trim();
-          const slmnCode = String(row.SLMN_CODE ?? '').trim();
-          const lookupKey = slmnKey || slmnCode;
-          const fallbackSum = row.SHOWSELLAMOUNT;
-          const netAmount = netByKey[lookupKey];
+        for (var i in oe304Results) {
+          const result = oe304Results[i];
           let jsonObj = {
-            id: i,
-            code: slmnCode,
-            name: row.SLMN_NAME,
-            sellAmount: netAmount ?? fallbackSum,
+            id: result.salesman.slmnKey || result.salesman.slmnCode,
+            code: result.salesman.slmnCode,
+            name: result.salesman.slmnName,
+            sellAmount: result.netAmount,
           };
-          if (netAmount === undefined) {
-            console.log('[IncomeBySlmn] fallback SHOWSELLAMOUNT', {
-              slmnKey,
-              slmnCode,
-              fallbackSum,
-            });
-          }
           arrayResult.push(jsonObj);
+        }
+        if (oe304Results.length === 0) {
+          safe_Format.alertNoData();
         }
       } else {
         safe_Format.alertNoData();
@@ -290,9 +270,8 @@ const IncomeBySlmn = ({
                                     <KeyboardAvoidingView keyboardVerticalOffset={1}>
                                         <TouchableNativeFeedback>
                                             <View>
-                                                {arrayObj.map(item => {
-                        return <>
-                                                            <View style={tableStyles.tableCell}>
+                                                {arrayObj.map((item, index) => {
+                        return <View key={`${item.id ?? index}-${item.code}-${item.name}`} style={tableStyles.tableCell}>
                                                                 <View width={deviceWidth * 0.2} style={tableStyles.tableCellTitle}><Text style={{
                                 fontSize: FontSize.medium,
                                 color: Colors.fontColor,
@@ -308,8 +287,7 @@ const IncomeBySlmn = ({
                                 color: Colors.fontColor,
                                 alignSelf: 'flex-end'
                               }}>{safe_Format.currencyFormat(item.sellAmount)}</Text></View>
-                                                            </View>
-                                                        </>;
+                                                            </View>;
                       })}
                                             </View>
                                         </TouchableNativeFeedback>

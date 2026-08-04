@@ -131,9 +131,9 @@ const ShowInComeTeam = ({
           sltCode: String(row.SLT_CODE ?? '').trim(),
           sltName: row.SLT_NAME
         }));
-        let netByCode = {};
+        let oe304Results = [];
         try {
-          const oe304Results = await fetchTeamsInvoices({
+          oe304Results = await fetchTeamsInvoices({
             urlser: databaseReducer.Data.urlser,
             serviceID: loginReducer.serviceID,
             loginGuid: tempGuid ? tempGuid : loginReducer.guid,
@@ -141,32 +141,21 @@ const ShowInComeTeam = ({
             toDate: eDate,
             teams
           });
-          netByCode = Object.fromEntries(
-            oe304Results.map(result => [
-              result.team.sltCode,
-              result.hasOe304Data ? result.netAmount : undefined,
-            ])
-          );
         } catch (oe304Error) {
           console.error('[ShowInComeTeam] Oe000304 loop error', oe304Error);
         }
-        for (var i in responseData.SHOWINCOMEBYSLTEAM) {
-          const code = String(responseData.SHOWINCOMEBYSLTEAM[i].SLT_CODE ?? '').trim();
-          const fallbackSum = responseData.SHOWINCOMEBYSLTEAM[i].SUMSLTSELL;
-          const netAmount = netByCode[code];
+        for (var i in oe304Results) {
+          const result = oe304Results[i];
           let jsonObj = {
             id: i,
-            code,
-            name: responseData.SHOWINCOMEBYSLTEAM[i].SLT_NAME,
-            sums: netAmount ?? fallbackSum
+            code: result.team.sltCode,
+            name: result.team.sltName,
+            sums: result.netAmount
           };
-          if (netAmount === undefined) {
-            console.log('[ShowInComeTeam] fallback SUMSLTSELL', {
-              code,
-              fallbackSum,
-            });
-          }
           arrayResult.push(jsonObj);
+        }
+        if (oe304Results.length === 0) {
+          safe_Format.alertNoData();
         }
       } else {
         safe_Format.alertNoData();
