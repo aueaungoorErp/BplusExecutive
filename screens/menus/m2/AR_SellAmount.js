@@ -76,6 +76,14 @@ const AR_SellAmount = ({
   useEffect(() => {
     setRadio_menu3(1, radio_props[5].value);
   }, []);
+  useEffect(() => {
+    console.log('[AR_SellAmount] selected AR', {
+      arKey: route.params?.Obj,
+      arCode: route.params?.arCode,
+      arName: route.params?.arName,
+      arPhone: route.params?.arPhone,
+    });
+  }, [route.params?.Obj]);
   const [page, setPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState([0]);
   var ser_die = true;
@@ -105,20 +113,29 @@ const AR_SellAmount = ({
     setModalVisible(!modalVisible);
     var sDate = safe_Format.setnewdateF(safe_Format.checkDate(start_date));
     var eDate = safe_Format.setnewdateF(safe_Format.checkDate(end_date));
-    await fetch(databaseReducer.Data.urlser + '/Executive', {
+    const apiUrl = databaseReducer.Data.urlser + '/Executive';
+    const requestBody = {
+      'BPAPUS-BPAPSV': loginReducer.serviceID,
+      'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
+      'BPAPUS-FUNCTION': 'SHOWSALESVALUESBYARKEY',
+      'BPAPUS-PARAM': '{"FROM_DATE": "' + sDate + '","TO_DATE": "' + eDate + '","AR_KEY": ' + route.params.Obj + '}',
+      'BPAPUS-FILTER': '',
+      'BPAPUS-ORDERBY': '',
+      'BPAPUS-OFFSET': '0',
+      'BPAPUS-FETCH': '0'
+    };
+    console.log('[AR_SellAmount] API URL', apiUrl);
+    console.log('[AR_SellAmount] request body', requestBody);
+    await fetch(apiUrl, {
       method: 'POST',
-      body: JSON.stringify({
-        'BPAPUS-BPAPSV': loginReducer.serviceID,
-        'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
-        'BPAPUS-FUNCTION': 'SHOWSALESVALUESBYARKEY',
-        'BPAPUS-PARAM': '{"FROM_DATE": "' + sDate + '","TO_DATE": "' + eDate + '","AR_KEY": ' + route.params.Obj + '}',
-        'BPAPUS-FILTER': '',
-        'BPAPUS-ORDERBY': '',
-        'BPAPUS-OFFSET': '0',
-        'BPAPUS-FETCH': '0'
-      })
+      body: JSON.stringify(requestBody)
     }).then(response => response.json()).then(json => {
       let responseData = JSON.parse(json.ResponseData);
+      console.log('[AR_SellAmount] response', {
+        arKey: route.params?.Obj,
+        recordCount: responseData.RECORD_COUNT,
+        rows: responseData.SHOWSALESVALUESBYARKEY,
+      });
       if (responseData.RECORD_COUNT > 0) {
         for (var i in responseData.SHOWSALESVALUESBYARKEY) {
           let jsonObj = {
@@ -235,9 +252,10 @@ const AR_SellAmount = ({
                                     <KeyboardAvoidingView keyboardVerticalOffset={1}>
                                         <TouchableNativeFeedback>
                                             <View>
-                                                {arrayObj.map(item => {
-                        return <>
-                                                            <View style={tableStyles.tableCell}>
+                                                {arrayObj.map(item => (
+                                                            <View
+                          key={`${item.year}-${item.month}-${item.id}`}
+                          style={tableStyles.tableCell}>
                                                                 <View width={deviceWidth * 0.2} style={tableStyles.tableCellTitle}><Text style={{
                                 fontSize: FontSize.medium,
                                 color: Colors.fontColor,
@@ -254,8 +272,7 @@ const AR_SellAmount = ({
                                 alignSelf: 'flex-end'
                               }}>{safe_Format.currencyFormat(item.sellAmount)}</Text></View>
                                                             </View>
-                                                        </>;
-                      })}
+                      ))}
                                             </View>
                                         </TouchableNativeFeedback>
                                     </KeyboardAvoidingView>

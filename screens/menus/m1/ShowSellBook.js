@@ -128,15 +128,11 @@ const ShowSellBook = ({
       'BPAPUS-OFFSET': '0',
       'BPAPUS-FETCH': '0'
     };
-    console.log('[ShowSellBook] API', apiUrl);
-    console.log('[ShowSellBook] request body', requestBody);
     await fetch(apiUrl, {
       method: 'POST',
       body: JSON.stringify(requestBody)
     }).then(response => response.json()).then(json => {
-      console.log('[ShowSellBook] response', json);
       let responseData = JSON.parse(json.ResponseData);
-      console.log('[ShowSellBook] parsed ResponseData', responseData);
       if (responseData.RECORD_COUNT > 0) {
         for (var i in responseData.SHOWSELLBOOKPURCPOBYYEARMONTH) {
           let jsonObj = {

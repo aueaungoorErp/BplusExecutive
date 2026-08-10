@@ -117,15 +117,11 @@ const ShowInComeTeam = ({
       'BPAPUS-OFFSET': '0',
       'BPAPUS-FETCH': '0'
     };
-    console.log('[ShowInComeTeam] API', apiUrl);
-    console.log('[ShowInComeTeam] request body', requestBody);
     await fetch(apiUrl, {
       method: 'POST',
       body: JSON.stringify(requestBody)
     }).then(response => response.json()).then(async json => {
-      console.log('[ShowInComeTeam] response', json);
       let responseData = JSON.parse(json.ResponseData);
-      console.log('[ShowInComeTeam] parsed ResponseData', responseData);
       if (responseData.RECORD_COUNT > 0) {
         const teams = responseData.SHOWINCOMEBYSLTEAM.map(row => ({
           sltCode: String(row.SLT_CODE ?? '').trim(),

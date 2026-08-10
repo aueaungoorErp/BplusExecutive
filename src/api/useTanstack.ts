@@ -72,23 +72,8 @@ export function useFetchOe000304ByTeams() {
           });
 
           if (!netSales.hasOe304Data) {
-            console.log('[ShowInComeTeam] Oe000304 skipped (no 302-307 data)', {
-              sltCode: team.sltCode,
-              sltName: team.sltName,
-            });
             continue;
           }
-
-          console.log('[ShowInComeTeam] Oe000304', {
-            sltCode: team.sltCode,
-            sltName: team.sltName,
-            sum302307: netSales.sumPrimary,
-            sum337308: netSales.sumSecondary,
-            netAmount: netSales.netAmount,
-            primaryCount: netSales.primaryCount,
-            secondaryCount: netSales.secondaryCount,
-            hasOe304Data: netSales.hasOe304Data,
-          });
 
           results.push({
             team,
@@ -180,25 +165,8 @@ export function useFetchOe000304BySalesmen() {
           });
 
           if (!netSales.hasOe304Data) {
-            console.log('[IncomeBySlmn] Oe000304 skipped (no 302-307 data)', {
-              slmnKey: salesman.slmnKey,
-              slmnCode: salesman.slmnCode,
-              slmnName: salesman.slmnName,
-            });
             continue;
           }
-
-          console.log('[IncomeBySlmn] Oe000304', {
-            slmnKey: salesman.slmnKey,
-            slmnCode: salesman.slmnCode,
-            slmnName: salesman.slmnName,
-            sum302307: netSales.sumPrimary,
-            sum337308: netSales.sumSecondary,
-            netAmount: netSales.netAmount,
-            primaryCount: netSales.primaryCount,
-            secondaryCount: netSales.secondaryCount,
-            hasOe304Data: netSales.hasOe304Data,
-          });
 
           results.push({
             salesman,

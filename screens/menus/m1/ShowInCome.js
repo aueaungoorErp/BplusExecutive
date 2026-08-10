@@ -190,6 +190,7 @@ const ShowInCome = ({
     const toDate = normalizePickerDate(toDateArg ?? end_date);
     var sDate = safe_Format.setnewdateF(fromDate);
     var eDate = safe_Format.setnewdateF(toDate);
+    const apiUrl = databaseReducer.Data.urlser + '/Executive';
     const requestBody = {
       'BPAPUS-BPAPSV': loginReducer.serviceID,
       'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
@@ -200,11 +201,17 @@ const ShowInCome = ({
       'BPAPUS-OFFSET': '0',
       'BPAPUS-FETCH': '0'
     };
-    await fetch(databaseReducer.Data.urlser + '/Executive', {
+    console.log('[ShowInCome] API URL', apiUrl);
+    console.log('[ShowInCome] request body', requestBody);
+    await fetch(apiUrl, {
       method: 'POST',
       body: JSON.stringify(requestBody)
     }).then(response => response.json()).then(json => {
       let responseData = JSON.parse(json.ResponseData);
+      console.log('[ShowInCome] response', {
+        recordCount: responseData.RECORD_COUNT,
+        rows: responseData.SHOWINCOMEBYYEAR,
+      });
       const nextRows = [];
       if (responseData.RECORD_COUNT > 0) {
         for (var i in responseData.SHOWINCOMEBYYEAR) {

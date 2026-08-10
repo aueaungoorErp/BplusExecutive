@@ -119,17 +119,13 @@ const IncomeBySlmn = ({
       'BPAPUS-OFFSET': '0',
       'BPAPUS-FETCH': '0'
     };
-    console.log('[IncomeBySlmn] API', apiUrl);
-    console.log('[IncomeBySlmn] request body', requestBody);
     try {
       const response = await fetch(apiUrl, {
         method: 'POST',
         body: JSON.stringify(requestBody)
       });
       const json = await response.json();
-      console.log('[IncomeBySlmn] response', json);
       let responseData = JSON.parse(json.ResponseData);
-      console.log('[IncomeBySlmn] parsed ResponseData', responseData);
       if (responseData.RECORD_COUNT > 0) {
         const salesmen = responseData.SHOWINCOMEBYSALESMAN.map(row => ({
           slmnKey: String(row.SLMN_KEY ?? '').trim(),

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Dimensions, Text, View, Image, Button, TextInput, KeyboardAvoidingView, ActivityIndicator, Alert, Platform, BackHandler, StatusBar, TouchableOpacity, Modal, Pressable } from 'react-native';
 import CalendarScreen from '@blacksakura013/th-datepicker';
 import CheckBox from '@react-native-community/checkbox';
@@ -19,11 +19,20 @@ import * as safe_Format from '../../../src/safe_Format';
 const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 import tableStyles from '../tableStyles';
+
+const buildArFilter = query => {
+  const term = (query || '').trim();
+  if (!term) {
+    return '';
+  }
+  const escaped = term.replace(/'/g, "''");
+  return `AND (AR_NAME LIKE '%${escaped}%' OR AR_CODE LIKE '%${escaped}%')`;
+};
+
 const showAR = ({
   route
 }) => {
   const dispatch = useDispatch();
-  let arrayResult = [];
   const navigation = useNavigation();
   const {
     container2,
@@ -51,62 +60,81 @@ const showAR = ({
   const [sum, setSum] = useState(0);
   const [textsearch, setSearch] = useState('');
   const screenTitle = route?.params?.title || Language.t('executiveMenus.ereport.arEach');
+  const searchRequestRef = useRef(0);
   var ser_die = true;
-  useEffect(() => {}, []);
-  const regisMacAdd = async () => {
-    dispatch(loginActions.guid(await safe_Format._fetchGuidLog(databaseReducer.Data.urlser, loginReducer.serviceID, registerReducer.machineNum, loginReducer.userNameED, loginReducer.passwordED)));
-    await fetchInSearch(tempGuid);
-  };
-  const InSearch = async () => {
-    setLoading(true);
-    await fetchInSearch();
-    setArrayObj(arrayResult);
-  };
-  const fetchInSearch = async tempGuid => {
-    await fetch(databaseReducer.Data.urlser + '/LookupErp', {
-      method: 'POST',
-      body: JSON.stringify({
-        'BPAPUS-BPAPSV': loginReducer.serviceID,
-        'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
-        'BPAPUS-FUNCTION': 'Ar000130',
-        'BPAPUS-PARAM': '',
-        'BPAPUS-FILTER': "AND (AR_NAME LIKE '%" + textsearch + "%')",
-        'BPAPUS-ORDERBY': '',
-        'BPAPUS-OFFSET': '0',
-        'BPAPUS-FETCH': '0'
-      })
-    }).then(response => response.json()).then(json => {
-      let responseData = JSON.parse(json.ResponseData);
+
+  const fetchInSearch = async (tempGuid, query = '') => {
+    const results = [];
+    try {
+      const response = await fetch(databaseReducer.Data.urlser + '/LookupErp', {
+        method: 'POST',
+        body: JSON.stringify({
+          'BPAPUS-BPAPSV': loginReducer.serviceID,
+          'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
+          'BPAPUS-FUNCTION': 'Ar000130',
+          'BPAPUS-PARAM': '',
+          'BPAPUS-FILTER': buildArFilter(query),
+          'BPAPUS-ORDERBY': '',
+          'BPAPUS-OFFSET': '0',
+          'BPAPUS-FETCH': '0'
+        })
+      });
+      const json = await response.json();
+      const responseData = JSON.parse(json.ResponseData);
       if (responseData.RECORD_COUNT > 0) {
         for (var i in responseData.Ar000130) {
-          let jsonObj = {
+          results.push({
             id: i,
             name: responseData.Ar000130[i].AR_NAME,
             key: responseData.Ar000130[i].AR_KEY,
             code: responseData.Ar000130[i].AR_CODE,
             phone: responseData.Ar000130[i].ADDB_PHONE
-          };
-          arrayResult.push(jsonObj);
+          });
         }
       } else {
         safe_Format.alertNoData();
       }
-    }).catch(error => {
+      return results;
+    } catch (error) {
       if (ser_die) {
         ser_die = false;
-        regisMacAdd();
-      } else {
-        let temp_error = 'error_ser.' + 610;
-        Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
-          text: Language.t('alert.ok'),
-          onPress: () => navigation.dispatch(navigation.replace('LoginScreen'))
-        }]);
-        setLoading(false);
+        const newGuid = await safe_Format._fetchGuidLog(
+          databaseReducer.Data.urlser,
+          loginReducer.serviceID,
+          registerReducer.machineNum,
+          loginReducer.userNameED,
+          loginReducer.passwordED,
+        );
+        await dispatch(loginActions.guid(newGuid));
+        return fetchInSearch(newGuid, query);
       }
+      const temp_error = 'error_ser.' + 610;
+      Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
+        text: Language.t('alert.ok'),
+        onPress: () => navigation.dispatch(navigation.replace('LoginScreen'))
+      }]);
       console.error('ERROR at fetchContent >> ' + error);
-    });
+      return [];
+    }
+  };
+
+  const InSearch = async (query = textsearch) => {
+    const requestId = ++searchRequestRef.current;
+    setLoading(true);
+    setArrayObj([]);
+    const results = await fetchInSearch(undefined, query);
+    if (requestId !== searchRequestRef.current) {
+      return;
+    }
+    setArrayObj(results);
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (databaseReducer?.Data?.urlser && loginReducer?.guid) {
+      InSearch('');
+    }
+  }, [databaseReducer?.Data?.urlser, loginReducer?.guid]);
   return <>
             <SafeAreaView style={container}>
                 <StatusBar hidden={true} />
@@ -151,11 +179,11 @@ const showAR = ({
             fontSize: FontSize.medium
           }} placeholderTextColor={Colors.fontColorSecondary} value={textsearch} placeholder={`${Language.t('report.searchPrefix')}${screenTitle}`} onChangeText={val => {
             setSearch(val);
-          }} />
+          }} onSubmitEditing={() => InSearch(textsearch)} />
 
                         <TouchableOpacity style={{
             padding: 10
-          }} onPress={() => InSearch()}>
+          }} onPress={() => InSearch(textsearch)}>
                             <Image style={{
               width: FontSize.large,
               height: FontSize.large
@@ -193,12 +221,24 @@ const showAR = ({
                                     <KeyboardAvoidingView keyboardVerticalOffset={1}>
                                         <TouchableNativeFeedback>
                                             <View>
-                                                {arrayObj.map(item => {
-                        return <>
-
-                                                            <TouchableOpacity onPress={() => navigation.navigate(route.params.routeName, {
-                            Obj: item.key
-                          })}>
+                                                {arrayObj.map(item => (
+                                                            <TouchableOpacity
+                          key={item.key || item.code || item.id}
+                          onPress={() => {
+                            const selectedAr = {
+                              arKey: item.key,
+                              arCode: item.code,
+                              arName: item.name,
+                              arPhone: item.phone,
+                            };
+                            console.log('[ShowAR] selected AR', selectedAr);
+                            navigation.navigate(route.params.routeName, {
+                              Obj: item.key,
+                              arCode: item.code,
+                              arName: item.name,
+                              arPhone: item.phone,
+                            });
+                          }}>
                                                                 <View style={tableStyles.tableCell}>
                                                                     <View width={deviceWidth * 0.3} style={tableStyles.tableCellTitle}><Text style={{
                                   fontSize: FontSize.medium,
@@ -217,8 +257,7 @@ const showAR = ({
                                 }}>{item.phone ? item.phone : 'ไม่มีข้อมูล'}</Text></View>
                                                                 </View>
                                                             </TouchableOpacity>
-                                                        </>;
-                      })}
+                      ))}
                                             </View>
                                         </TouchableNativeFeedback>
                                     </KeyboardAvoidingView>
