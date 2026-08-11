@@ -16,6 +16,7 @@ import * as databaseActions from '../../../src/actions/databaseActions';
 import Colors from '../../../src/Colors';
 import { fontSize, right } from 'styled-system';
 import * as safe_Format from '../../../src/safe_Format';
+import { useFetchOe000304Global } from '../../../src/api/useTanstack';
 const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 /** Label + date picker on one row inside the search modal sheet. */
@@ -67,6 +68,7 @@ const ShowInCome = ({
   const databaseReducer = useSelector(({
     databaseReducer
   }) => databaseReducer);
+  const { fetchGlobalMonthlySales } = useFetchOe000304Global();
   const [loading, setLoading] = useStateIfMounted(false);
   const [modalVisible, setModalVisible] = useState(true);
   const [arrayObj, setArrayObj] = useState([]);
@@ -166,7 +168,9 @@ const ShowInCome = ({
   const regisMacAdd = async () => {
     let tempGuid = await safe_Format._fetchGuidLog(databaseReducer.Data.urlser, loginReducer.serviceID, registerReducer.machineNum, loginReducer.userNameED, loginReducer.passwordED);
     await dispatch(loginActions.guid(tempGuid));
-    fetchInCome(tempGuid);
+    const rows = await fetchInCome(tempGuid);
+    setArrayObj(rows);
+    setLoading(false);
   };
   const InCome = async () => {
     const fromDate = normalizePickerDate(start_date);
@@ -183,64 +187,47 @@ const ShowInCome = ({
     setE_date(toDate);
     setLoading(true);
     setModalVisible(false);
-    await fetchInCome(undefined, fromDate, toDate);
+    const rows = await fetchInCome(undefined, fromDate, toDate);
+    setArrayObj(rows);
+    setLoading(false);
   };
   const fetchInCome = async (tempGuid, fromDateArg, toDateArg) => {
     const fromDate = normalizePickerDate(fromDateArg ?? start_date);
     const toDate = normalizePickerDate(toDateArg ?? end_date);
+    const loginGuid = tempGuid ? tempGuid : loginReducer.guid;
     var sDate = safe_Format.setnewdateF(fromDate);
     var eDate = safe_Format.setnewdateF(toDate);
-    const apiUrl = databaseReducer.Data.urlser + '/Executive';
-    const requestBody = {
-      'BPAPUS-BPAPSV': loginReducer.serviceID,
-      'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
-      'BPAPUS-FUNCTION': 'SHOWINCOMEBYYEAR',
-      'BPAPUS-PARAM': '{"FROM_DATE": "' + sDate + '","TO_DATE": "' + eDate + '"}',
-      'BPAPUS-FILTER': '',
-      'BPAPUS-ORDERBY': '',
-      'BPAPUS-OFFSET': '0',
-      'BPAPUS-FETCH': '0'
-    };
-    console.log('[ShowInCome] API URL', apiUrl);
-    console.log('[ShowInCome] request body', requestBody);
-    await fetch(apiUrl, {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    }).then(response => response.json()).then(json => {
-      let responseData = JSON.parse(json.ResponseData);
-      console.log('[ShowInCome] response', {
-        recordCount: responseData.RECORD_COUNT,
-        rows: responseData.SHOWINCOMEBYYEAR,
+    try {
+      const result = await fetchGlobalMonthlySales({
+        urlser: databaseReducer.Data.urlser,
+        serviceID: loginReducer.serviceID,
+        loginGuid,
+        fromDate: sDate,
+        toDate: eDate,
       });
-      const nextRows = [];
-      if (responseData.RECORD_COUNT > 0) {
-        for (var i in responseData.SHOWINCOMEBYYEAR) {
-          nextRows.push({
-            id: i,
-            year: responseData.SHOWINCOMEBYYEAR[i].SHOWYEAR,
-            month: responseData.SHOWINCOMEBYYEAR[i].SHOWMONTH,
-            sellAmount: responseData.SHOWINCOMEBYYEAR[i].SHOWSELLAMOUNT
-          });
-        }
-      } else {
+      if (!result.hasOe304Data || result.rows.length === 0) {
         safe_Format.alertNoData();
+        return [];
       }
-      setArrayObj(nextRows);
-      setLoading(false);
-    }).catch(error => {
+      return result.rows.map((row, index) => ({
+        id: index,
+        year: row.year,
+        month: row.month,
+        sellAmount: row.sellAmount,
+      }));
+    } catch (error) {
       if (ser_die) {
         ser_die = false;
-        regisMacAdd();
-      } else {
-        let temp_error = 'error_ser.' + 610;
-        Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
-          text: Language.t('alert.ok'),
-          onPress: () => navigation.dispatch(navigation.replace('LoginScreen'))
-        }]);
-        setLoading(false);
+        return regisMacAdd();
       }
+      const temp_error = 'error_ser.' + 610;
+      Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
+        text: Language.t('alert.ok'),
+        onPress: () => navigation.dispatch(navigation.replace('LoginScreen'))
+      }]);
       console.error('ERROR at fetchContent >> ' + error);
-    });
+      return [];
+    }
   };
   const setRadio_menu1 = (index, val) => {
     const Radio_Obj = safe_Format.Radio_menu(index, val);

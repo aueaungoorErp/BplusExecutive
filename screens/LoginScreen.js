@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Dimensions, Text, View, Image, ImageBackground, TextInput, KeyboardAvoidingView, ActivityIndicator, Alert, Platform, BackHandler, StatusBar, ScrollView, TouchableNativeFeedback, TouchableOpacity } from 'react-native';
+import { StyleSheet, Dimensions, Text, View, Image, ImageBackground, TextInput, KeyboardAvoidingView, ActivityIndicator, Alert, Platform, BackHandler, StatusBar, TouchableNativeFeedback, TouchableOpacity } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
 import DeviceInfo from 'react-native-device-info';
 import { NetworkInfo } from 'react-native-network-info';
@@ -223,7 +223,7 @@ const LoginScreen = () => {
         await tslogin();
       }
     }} resizeMode="cover" style={styles.image}>
-        {!loading_backG ? <ScrollView>
+        {!loading_backG ? <View style={styles.screenContent}>
             <View style={tabbar}>
               <TouchableOpacity onPress={() => navigation.navigate('SelectScreen', {
             data: ''
@@ -241,11 +241,9 @@ const LoginScreen = () => {
                 {databaseReducer.Data.nameser ? databaseReducer.Data.nameser : 'ไม่มีการเชื่อมต่อกิจการ'}
               </Text>
             </View>
-            {loginReducer.guid.length == 0 && <KeyboardAvoidingView keyboardVerticalOffset={1} behavior={'position'}>
-                <View style={{
-            padding: 20,
-            marginTop: deviceHeight / 2.3
-          }}>
+            <View style={styles.formSpacer} />
+            {loginReducer.guid.length == 0 && <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}>
+                <View style={styles.formContainer}>
                   <View>
                     <View style={{
                 backgroundColor: Colors.backgroundLoginColorSecondary,
@@ -287,7 +285,7 @@ const LoginScreen = () => {
                   </View>
 
                   <View style={{
-              marginTop: 10
+              marginTop: 8
             }}>
                     <View style={{
                 backgroundColor: Colors.backgroundLoginColorSecondary,
@@ -351,7 +349,8 @@ const LoginScreen = () => {
                         <View style={{
                     borderRadius: 20,
                     flexDirection: 'column',
-                    padding: 20,
+                    paddingVertical: 14,
+                    paddingHorizontal: 20,
                     backgroundColor: Colors.buttonColorPrimary
                   }}>
                           <Text style={{
@@ -374,7 +373,7 @@ const LoginScreen = () => {
                   </View>
                 </View>
               </KeyboardAvoidingView>}
-          </ScrollView> : <View style={{
+          </View> : <View style={{
         width: deviceWidth,
         height: deviceHeight,
         opacity: 0.5,
@@ -411,8 +410,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column'
   },
   image: {
-    flex: 1,
-    justifyContent: 'center'
+    flex: 1
   },
   container2: {
     width: deviceWidth,
@@ -476,7 +474,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 10,
     marginLeft: 10,
-    marginBottom: 20
+    marginBottom: 12
+  },
+  screenContent: {
+    flex: 1
+  },
+  formSpacer: {
+    flex: 1
+  },
+  formContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 32
   },
   checkbox: {
     alignSelf: 'center',

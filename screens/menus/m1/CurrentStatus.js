@@ -16,6 +16,7 @@ import * as registerActions from '../../../src/actions/registerActions';
 import * as databaseActions from '../../../src/actions/databaseActions';
 import Colors from '../../../src/Colors';
 import * as safe_Format from '../../../src/safe_Format';
+import { useFetchCurrentStatusNetIncome } from '../../../src/api/useTanstack';
 const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 import tableStyles from '../tableStyles';
@@ -43,33 +44,37 @@ const CurrentStatus = ({
   const databaseReducer = useSelector(({
     databaseReducer
   }) => databaseReducer);
+  const { fetchCurrentStatusNetIncome } = useFetchCurrentStatusNetIncome();
   const [loading, setLoading] = useStateIfMounted(false);
   const [modalVisible, setModalVisible] = useState(true);
   const [arrayObj, setArrayObj] = useState([]);
   const [start_date, setS_date] = useState(new Date());
   const [end_date, setE_date] = useState(new Date());
   // const [sum, setSum] = useState(0)
-  const [radioIndex1, setRadioIndex1] = useState(4);
-  const [radioIndex2, setRadioIndex2] = useState(4);
-  const [radioIndex3, setRadioIndex3] = useState(4);
+  const [radioIndex, setRadioIndex] = useState(3);
   const radio_props = [{
-    label: Language.t('report.filter.endOfLastMonth'),
-    value: 'lastAmonth'
+    label: Language.t('report.filter.thisYear'),
+    value: 'nowyear'
   }, {
-    label: Language.t('report.filter.endOfLastYear'),
-    value: 'lastAyear'
+    label: Language.t('report.filter.previousMonth'),
+    value: 'lastmonth'
   }, {
-    label: Language.t('report.filter.yesterday'),
-    value: 'lastday'
+    label: Language.t('report.filter.thisMonth'),
+    value: 'nowmonth'
   }, {
     label: Language.t('report.filter.today'),
     value: 'nowday'
-  }, {
-    label: null,
-    value: null
   }];
+  const setRadioFilter = (index, val) => {
+    const Radio_Obj = safe_Format.Radio_menu(index, val);
+    setRadioIndex(Radio_Obj.index);
+    if (val != null) {
+      setS_date(new Date(Radio_Obj.sdate));
+      setE_date(new Date(Radio_Obj.edate));
+    }
+  };
   useEffect(() => {
-    setRadio_menu2(1, radio_props[3].value);
+    setRadioFilter(3, radio_props[3].value);
   }, []);
   const [page, setPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState([0]);
@@ -80,9 +85,6 @@ const CurrentStatus = ({
   let sum_this_year = [];
   let sum_last_year = [];
   var ser_die = true;
-  useEffect(() => {
-    setRadio_menu2(1, radio_props[3].value);
-  }, []);
   useEffect(() => {
     setPage(0);
   }, [itemsPerPage]);
@@ -111,43 +113,68 @@ const CurrentStatus = ({
   };
   const fetchInCome = async tempGuid => {
     setModalVisible(!modalVisible);
-    var sDate = safe_Format.setnewdateF(safe_Format.checkDate(start_date));
     var eDate = safe_Format.setnewdateF(safe_Format.checkDate(end_date));
-    await fetch(databaseReducer.Data.urlser + '/Executive', {
-      method: 'POST',
-      body: JSON.stringify({
-        'BPAPUS-BPAPSV': loginReducer.serviceID,
-        'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
-        'BPAPUS-FUNCTION': 'SHOWFINANCERATIO',
-        'BPAPUS-PARAM': '{"TO_DATE": ' + eDate + '}',
-        'BPAPUS-FILTER': '',
-        'BPAPUS-ORDERBY': '',
-        'BPAPUS-OFFSET': '0',
-        'BPAPUS-FETCH': '0'
-      })
-    }).then(response => response.json()).then(json => {
-      let responseData = JSON.parse(json.ResponseData);
-      if (responseData.RECORD_COUNT > 0) {
-        for (var i in responseData.SHOWFINANCERATIO) {
-          let jsonObj = {
-            id: i,
-            key: responseData.SHOWFINANCERATIO[i].TDATA_KEY,
-            type: responseData.SHOWFINANCERATIO[i].TDATA_TYPE,
-            desc: responseData.SHOWFINANCERATIO[i].TDATA_DESC,
-            last_month: responseData.SHOWFINANCERATIO[i].TDATA_LAST_MONTH,
-            this_year: responseData.SHOWFINANCERATIO[i].TDATA_THIS_YEAR,
-            last_year: responseData.SHOWFINANCERATIO[i].TDATA_LAST_YEAR
-          };
-          sum_last_month.push(jsonObj.last_month);
-          sum_this_year.push(jsonObj.this_year);
-          sum_last_year.push(jsonObj.last_year);
-          arrayResult.push(jsonObj);
-        }
-      } else {
+    const loginGuid = tempGuid ? tempGuid : loginReducer.guid;
+    arrayResult = [];
+    sum_last_month = [];
+    sum_this_year = [];
+    sum_last_year = [];
+    try {
+      const response = await fetch(databaseReducer.Data.urlser + '/Executive', {
+        method: 'POST',
+        body: JSON.stringify({
+          'BPAPUS-BPAPSV': loginReducer.serviceID,
+          'BPAPUS-LOGIN-GUID': loginGuid,
+          'BPAPUS-FUNCTION': 'SHOWFINANCERATIO',
+          'BPAPUS-PARAM': '{"TO_DATE": ' + eDate + '}',
+          'BPAPUS-FILTER': '',
+          'BPAPUS-ORDERBY': '',
+          'BPAPUS-OFFSET': '0',
+          'BPAPUS-FETCH': '0'
+        })
+      });
+      const json = await response.json();
+      const responseData = JSON.parse(json.ResponseData);
+      if (Number(responseData.RECORD_COUNT) <= 0 || !responseData.SHOWFINANCERATIO) {
         safe_Format.alertNoData();
+        return;
       }
-      setLoading(false);
-    }).catch(error => {
+
+      const rows = [];
+      for (var i in responseData.SHOWFINANCERATIO) {
+        rows.push({
+          id: i,
+          key: responseData.SHOWFINANCERATIO[i].TDATA_KEY,
+          type: responseData.SHOWFINANCERATIO[i].TDATA_TYPE,
+          desc: responseData.SHOWFINANCERATIO[i].TDATA_DESC,
+          last_month: responseData.SHOWFINANCERATIO[i].TDATA_LAST_MONTH,
+          this_year: responseData.SHOWFINANCERATIO[i].TDATA_THIS_YEAR,
+          last_year: responseData.SHOWFINANCERATIO[i].TDATA_LAST_YEAR
+        });
+      }
+
+      const netIncome = await fetchCurrentStatusNetIncome({
+        urlser: databaseReducer.Data.urlser,
+        serviceID: loginReducer.serviceID,
+        loginGuid,
+        toDate: eDate,
+      });
+      const netRowIndex = rows.findIndex(row =>
+        String(row.desc ?? '').includes('รายได้สุทธิ'),
+      );
+      if (netRowIndex >= 0) {
+        rows[netRowIndex].last_month = netIncome.lastMonth;
+        rows[netRowIndex].last_year = netIncome.lastYear;
+        rows[netRowIndex].this_year = netIncome.thisYear;
+      }
+
+      for (const row of rows) {
+        sum_last_month.push(row.last_month);
+        sum_this_year.push(row.this_year);
+        sum_last_year.push(row.last_year);
+        arrayResult.push(row);
+      }
+    } catch (error) {
       if (ser_die) {
         ser_die = false;
         regisMacAdd();
@@ -157,42 +184,12 @@ const CurrentStatus = ({
           text: Language.t('alert.ok'),
           onPress: () => navigation.dispatch(navigation.replace('LoginStackScreen'))
         }]);
-        setLoading(false);
       }
       console.error('ERROR at fetchContent >> ' + error);
-    });
-  };
-  const setRadio_menu1 = (index, val) => {
-    const Radio_Obj = safe_Format.Radio_menu(index, val);
-    setRadioIndex1(Radio_Obj.index);
-    if (val != null) {
-      setS_date(new Date(Radio_Obj.sdate));
-      setE_date(new Date(Radio_Obj.edate));
+    } finally {
+      setLoading(false);
     }
-    setRadioIndex2(2);
-    setRadioIndex3(2);
   };
-  const setRadio_menu2 = (index, val) => {
-    const Radio_Obj = safe_Format.Radio_menu(index, val);
-    setRadioIndex2(Radio_Obj.index);
-    if (val != null) {
-      setS_date(new Date(Radio_Obj.sdate));
-      setE_date(new Date(Radio_Obj.edate));
-    }
-    setRadioIndex1(2);
-    setRadioIndex3(2);
-  };
-  const setRadio_menu3 = (index, val) => {
-    const Radio_Obj = safe_Format.Radio_menu(index, val);
-    setRadioIndex3(Radio_Obj.index);
-    if (val != null) {
-      setS_date(new Date(Radio_Obj.sdate));
-      setE_date(new Date(Radio_Obj.edate));
-    }
-    setRadioIndex1(2);
-    setRadioIndex2(2);
-  };
-  useEffect(() => {}, []);
   return <>
             <SafeAreaView style={container}>
                 <StatusBar hidden={true} />
@@ -344,7 +341,7 @@ const CurrentStatus = ({
                                             <RadioGroup style={{
                       flexDirection: 'row',
                       paddingLeft: 10
-                    }} selectedIndex={radioIndex1} onSelect={(index, value) => setRadio_menu1(index, value)}>
+                    }} selectedIndex={radioIndex <= 1 ? radioIndex : 2} onSelect={(index, value) => setRadioFilter(index, value)}>
                                                 <RadioButton value={radio_props[0].value}>
                                                     <Text style={{
                           fontSize: FontSize.medium,
@@ -364,7 +361,7 @@ const CurrentStatus = ({
                                             <RadioGroup style={{
                       flexDirection: 'row',
                       paddingLeft: 10
-                    }} selectedIndex={radioIndex2} onSelect={(index, value) => setRadio_menu2(index, value)}>
+                    }} selectedIndex={radioIndex >= 2 ? radioIndex - 2 : 2} onSelect={(index, value) => setRadioFilter(index + 2, value)}>
                                                 <RadioButton value={radio_props[2].value}>
                                                     <Text style={{
                           fontSize: FontSize.medium,
@@ -583,6 +580,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: Colors.fontColor2,
     fontSize: FontSize.medium
-  }
+  },
 });
 export default CurrentStatus;

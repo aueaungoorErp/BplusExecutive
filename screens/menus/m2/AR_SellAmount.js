@@ -15,6 +15,12 @@ import * as registerActions from '../../../src/actions/registerActions';
 import * as databaseActions from '../../../src/actions/databaseActions';
 import Colors from '../../../src/Colors';
 import * as safe_Format from '../../../src/safe_Format';
+import { useFetchOe000304ByAr } from '../../../src/api/useTanstack';
+import {
+  buildOe000304LookupBodyByAr,
+  OE000304_PRIMARY_PROPERTIES,
+  OE000304_SECONDARY_PROPERTIES,
+} from '../../../src/api/until';
 const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 import tableStyles from '../tableStyles';
@@ -22,8 +28,8 @@ const AR_SellAmount = ({
   route
 }) => {
   const dispatch = useDispatch();
-  let arrayResult = [];
   const navigation = useNavigation();
+  const { fetchArMonthlySales } = useFetchOe000304ByAr();
   const {
     container2,
     container,
@@ -100,70 +106,84 @@ const AR_SellAmount = ({
   const regisMacAdd = async () => {
     let tempGuid = await safe_Format._fetchGuidLog(databaseReducer.Data.urlser, loginReducer.serviceID, registerReducer.machineNum, loginReducer.userNameED, loginReducer.passwordED);
     await dispatch(loginActions.guid(tempGuid));
-    fetchInCome(tempGuid);
+    const rows = await fetchInCome(tempGuid);
+    setArrayObj(rows);
+    setLoading(false);
   };
   const InCome = async () => {
     setLoading(true);
-    await fetchInCome();
-    setModalVisible(!modalVisible);
-    setArrayObj(arrayResult);
-    for (var i in arrayResult) {}
+    setModalVisible(false);
+    const rows = await fetchInCome();
+    setArrayObj(rows);
+    setLoading(false);
   };
   const fetchInCome = async tempGuid => {
-    setModalVisible(!modalVisible);
+    const loginGuid = tempGuid ? tempGuid : loginReducer.guid;
     var sDate = safe_Format.setnewdateF(safe_Format.checkDate(start_date));
     var eDate = safe_Format.setnewdateF(safe_Format.checkDate(end_date));
-    const apiUrl = databaseReducer.Data.urlser + '/Executive';
-    const requestBody = {
-      'BPAPUS-BPAPSV': loginReducer.serviceID,
-      'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
-      'BPAPUS-FUNCTION': 'SHOWSALESVALUESBYARKEY',
-      'BPAPUS-PARAM': '{"FROM_DATE": "' + sDate + '","TO_DATE": "' + eDate + '","AR_KEY": ' + route.params.Obj + '}',
-      'BPAPUS-FILTER': '',
-      'BPAPUS-ORDERBY': '',
-      'BPAPUS-OFFSET': '0',
-      'BPAPUS-FETCH': '0'
-    };
-    console.log('[AR_SellAmount] API URL', apiUrl);
-    console.log('[AR_SellAmount] request body', requestBody);
-    await fetch(apiUrl, {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    }).then(response => response.json()).then(json => {
-      let responseData = JSON.parse(json.ResponseData);
-      console.log('[AR_SellAmount] response', {
-        arKey: route.params?.Obj,
-        recordCount: responseData.RECORD_COUNT,
-        rows: responseData.SHOWSALESVALUESBYARKEY,
+    const arKey = String(route.params?.Obj ?? '');
+    const apiUrl = databaseReducer.Data.urlser + '/LookupErp';
+    const primaryBody = buildOe000304LookupBodyByAr(
+      loginReducer.serviceID,
+      loginGuid,
+      arKey,
+      sDate,
+      eDate,
+      OE000304_PRIMARY_PROPERTIES,
+    );
+    const secondaryBody = buildOe000304LookupBodyByAr(
+      loginReducer.serviceID,
+      loginGuid,
+      arKey,
+      sDate,
+      eDate,
+      OE000304_SECONDARY_PROPERTIES,
+    );
+    console.log('[AR_SellAmount] Oe000304 API URL', apiUrl);
+    console.log('[AR_SellAmount] Oe000304 request body primary', primaryBody);
+    console.log('[AR_SellAmount] Oe000304 request body secondary', secondaryBody);
+    try {
+      const result = await fetchArMonthlySales({
+        urlser: databaseReducer.Data.urlser,
+        serviceID: loginReducer.serviceID,
+        loginGuid,
+        arKey,
+        fromDate: sDate,
+        toDate: eDate,
       });
-      if (responseData.RECORD_COUNT > 0) {
-        for (var i in responseData.SHOWSALESVALUESBYARKEY) {
-          let jsonObj = {
-            id: i,
-            year: responseData.SHOWSALESVALUESBYARKEY[i].SHOWYEAR,
-            month: responseData.SHOWSALESVALUESBYARKEY[i].SHOWMONTH,
-            sellAmount: responseData.SHOWSALESVALUESBYARKEY[i].SHOWSELLAMOUNT
-          };
-          arrayResult.push(jsonObj);
-        }
-      } else {
+      console.log('[AR_SellAmount] Oe000304 response', {
+        arKey: result.arKey,
+        hasOe304Data: result.hasOe304Data,
+        primaryCount: result.primaryCount,
+        secondaryCount: result.secondaryCount,
+        sumPrimary: result.sumPrimary,
+        sumSecondary: result.sumSecondary,
+        rows: result.rows,
+      });
+      if (!result.hasOe304Data || result.rows.length === 0) {
         safe_Format.alertNoData();
+        return [];
       }
-      setLoading(false);
-    }).catch(error => {
+      return result.rows.map((row, index) => ({
+        id: index,
+        year: row.year,
+        month: row.month,
+        sellAmount: row.sellAmount,
+      }));
+    } catch (error) {
       if (ser_die) {
         ser_die = false;
         regisMacAdd();
-      } else {
-        let temp_error = 'error_ser.' + 610;
-        Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
-          text: Language.t('alert.ok'),
-          onPress: () => navigation.dispatch(navigation.replace('LoginScreen'))
-        }]);
-        setLoading(false);
+        return [];
       }
+      const temp_error = 'error_ser.' + 610;
+      Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
+        text: Language.t('alert.ok'),
+        onPress: () => navigation.dispatch(navigation.replace('LoginScreen'))
+      }]);
       console.error('ERROR at fetchContent >> ' + error);
-    });
+      return [];
+    }
   };
   const setRadio_menu1 = (index, val) => {
     const Radio_Obj = safe_Format.Radio_menu(index, val);

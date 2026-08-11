@@ -15,6 +15,7 @@ import * as registerActions from '../../../src/actions/registerActions';
 import * as databaseActions from '../../../src/actions/databaseActions';
 import Colors from '../../../src/Colors';
 import * as safe_Format from '../../../src/safe_Format';
+import { useFetchOe000304GlobalDaily } from '../../../src/api/useTanstack';
 const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 import tableStyles from '../tableStyles';
@@ -22,7 +23,6 @@ const ShowSellBook = ({
   route
 }) => {
   const dispatch = useDispatch();
-  let arrayResult = [];
   const navigation = useNavigation();
   const {
     container2,
@@ -43,6 +43,7 @@ const ShowSellBook = ({
   const databaseReducer = useSelector(({
     databaseReducer
   }) => databaseReducer);
+  const { fetchGlobalDailySales } = useFetchOe000304GlobalDaily();
   const [modalVisible, setModalVisible] = useState(true);
   const [arrayObj, setArrayObj] = useState([]);
   const [start_date, setS_date] = useState(new Date());
@@ -101,72 +102,70 @@ const ShowSellBook = ({
   const regisMacAdd = async () => {
     let tempGuid = await safe_Format._fetchGuidLog(databaseReducer.Data.urlser, loginReducer.serviceID, registerReducer.machineNum, loginReducer.userNameED, loginReducer.passwordED);
     await dispatch(loginActions.guid(tempGuid));
-    fetchInCome(tempGuid);
+    const rows = await fetchInCome(tempGuid);
+    setArrayObj(rows);
+    sellamountsetArrayObj(rows.map(row => row.sellamount));
+    bookamountsetArrayObj(rows.map(row => row.bookamount));
+    setLoading(false);
   };
   const InCome = async () => {
+    const fromDate = safe_Format.checkDate(start_date);
+    const toDate = safe_Format.checkDate(end_date);
+    if (fromDate.getTime() > toDate.getTime()) {
+      Alert.alert(
+        Language.t('alert.errorTitle'),
+        Language.t('report.dateRangeInvalid'),
+        [{ text: Language.t('alert.ok') }],
+      );
+      return;
+    }
+    setS_date(fromDate);
+    setE_date(toDate);
     setLoading(true);
-    await fetchInCome();
-    setModalVisible(!modalVisible);
-    setArrayObj(arrayResult);
-    sellamountsetArrayObj(sum_sellamount);
-    bookamountsetArrayObj(sum_bookamount);
-    purcamountsetArrayObj(sum_purcamount);
-    poamountsetArrayObj(sum_poamount);
+    setModalVisible(false);
+    const rows = await fetchInCome(undefined, fromDate, toDate);
+    setArrayObj(rows);
+    sellamountsetArrayObj(rows.map(row => row.sellamount));
+    bookamountsetArrayObj(rows.map(row => row.bookamount));
+    setLoading(false);
   };
-  const fetchInCome = async tempGuid => {
-    setModalVisible(!modalVisible);
-    var sDate = safe_Format.setnewdateF(safe_Format.checkDate(start_date));
-    var eDate = safe_Format.setnewdateF(safe_Format.checkDate(end_date));
-    const apiUrl = databaseReducer.Data.urlser + '/Executive';
-    const requestBody = {
-      'BPAPUS-BPAPSV': loginReducer.serviceID,
-      'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
-      'BPAPUS-FUNCTION': 'SHOWSELLBOOKPURCPOBYYEARMONTH',
-      'BPAPUS-PARAM': '{"FROM_DATE": "' + sDate + '","TO_DATE": ' + eDate + '}',
-      'BPAPUS-FILTER': '',
-      'BPAPUS-ORDERBY': '',
-      'BPAPUS-OFFSET': '0',
-      'BPAPUS-FETCH': '0'
-    };
-    await fetch(apiUrl, {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    }).then(response => response.json()).then(json => {
-      let responseData = JSON.parse(json.ResponseData);
-      if (responseData.RECORD_COUNT > 0) {
-        for (var i in responseData.SHOWSELLBOOKPURCPOBYYEARMONTH) {
-          let jsonObj = {
-            id: i,
-            date: responseData.SHOWSELLBOOKPURCPOBYYEARMONTH[i].DI_DATE,
-            sellamount: responseData.SHOWSELLBOOKPURCPOBYYEARMONTH[i].SHOWSELLVALUE,
-            bookamount: responseData.SHOWSELLBOOKPURCPOBYYEARMONTH[i].SHOWBOOKAMOUNT,
-            purcamount: responseData.SHOWSELLBOOKPURCPOBYYEARMONTH[i].SHOWPURCAMOUNT,
-            poamount: responseData.SHOWSELLBOOKPURCPOBYYEARMONTH[i].SHOWPOAMOUNT
-          };
-          sum_sellamount.push(jsonObj.sellamount);
-          sum_bookamount.push(jsonObj.bookamount);
-          sum_purcamount.push(jsonObj.purcamount);
-          sum_poamount.push(jsonObj.poamount);
-          arrayResult.push(jsonObj);
-        }
-      } else {
+  const fetchInCome = async (tempGuid, fromDateArg, toDateArg) => {
+    const fromDate = safe_Format.checkDate(fromDateArg ?? start_date);
+    const toDate = safe_Format.checkDate(toDateArg ?? end_date);
+    const loginGuid = tempGuid ? tempGuid : loginReducer.guid;
+    var sDate = safe_Format.setnewdateF(fromDate);
+    var eDate = safe_Format.setnewdateF(toDate);
+    try {
+      const result = await fetchGlobalDailySales({
+        urlser: databaseReducer.Data.urlser,
+        serviceID: loginReducer.serviceID,
+        loginGuid,
+        fromDate: sDate,
+        toDate: eDate,
+      });
+      if (!result.hasOe304Data || result.rows.length === 0) {
         safe_Format.alertNoData();
+        return [];
       }
-      setLoading(false);
-    }).catch(error => {
+      return result.rows.map((row, index) => ({
+        id: index,
+        date: row.date,
+        sellamount: row.sellAmount,
+        bookamount: 0,
+      }));
+    } catch (error) {
       if (ser_die) {
         ser_die = false;
-        regisMacAdd();
-      } else {
-        let temp_error = 'error_ser.' + 610;
-        Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
-          text: Language.t('alert.ok'),
-          onPress: () => navigation.dispatch(navigation.replace('LoginScreen'))
-        }]);
-        setLoading(false);
+        return regisMacAdd();
       }
+      let temp_error = 'error_ser.' + 610;
+      Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
+        text: Language.t('alert.ok'),
+        onPress: () => navigation.dispatch(navigation.replace('LoginScreen'))
+      }]);
       console.error('ERROR at fetchContent >> ' + error);
-    });
+      return [];
+    }
   };
   const fetchOe002404 = async tempGuid => {
     setArrayOe002404Obj([]);

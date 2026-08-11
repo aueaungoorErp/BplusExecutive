@@ -15,6 +15,11 @@ import * as registerActions from '../../../src/actions/registerActions';
 import * as databaseActions from '../../../src/actions/databaseActions';
 import Colors from '../../../src/Colors';
 import * as safe_Format from '../../../src/safe_Format';
+import { useFetchArSalesByGoods } from '../../../src/api/useTanstack';
+import {
+  buildOe000304LookupBodyByAr,
+  OE000304_PRIMARY_PROPERTIES,
+} from '../../../src/api/until';
 const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 import tableStyles from '../tableStyles';
@@ -22,7 +27,6 @@ const AR_SellAmountByIcDept = ({
   route
 }) => {
   const dispatch = useDispatch();
-  let arrayResult = [];
   const navigation = useNavigation();
   const {
     container2,
@@ -42,6 +46,7 @@ const AR_SellAmountByIcDept = ({
   const databaseReducer = useSelector(({
     databaseReducer
   }) => databaseReducer);
+  const { fetchArSalesByGoods } = useFetchArSalesByGoods();
   const [loading, setLoading] = useStateIfMounted(false);
   const [modalVisible, setModalVisible] = useState(true);
   const [arrayObj, setArrayObj] = useState([]);
@@ -100,70 +105,108 @@ const AR_SellAmountByIcDept = ({
   const regisMacAdd = async () => {
     let tempGuid = await safe_Format._fetchGuidLog(databaseReducer.Data.urlser, loginReducer.serviceID, registerReducer.machineNum, loginReducer.userNameED, loginReducer.passwordED);
     await dispatch(loginActions.guid(tempGuid));
-    fetchInCome(tempGuid);
+    const rows = await fetchInCome(tempGuid);
+    setArrayObj(rows);
+    setLoading(false);
   };
   const InCome = async () => {
+    const fromDate = safe_Format.checkDate(start_date);
+    const toDate = safe_Format.checkDate(end_date);
+    if (fromDate.getTime() > toDate.getTime()) {
+      Alert.alert(
+        Language.t('alert.errorTitle'),
+        Language.t('report.dateRangeInvalid'),
+        [{ text: Language.t('alert.ok') }],
+      );
+      return;
+    }
+    setS_date(fromDate);
+    setE_date(toDate);
     setLoading(true);
-    await fetchInCome();
-    setModalVisible(!modalVisible);
-    setArrayObj(arrayResult);
-    for (var i in arrayResult) {}
+    setModalVisible(false);
+    const rows = await fetchInCome(undefined, fromDate, toDate);
+    setArrayObj(rows);
+    setLoading(false);
   };
-  const fetchInCome = async tempGuid => {
-    setModalVisible(!modalVisible);
-    var sDate = safe_Format.setnewdateF(safe_Format.checkDate(start_date));
-    var eDate = safe_Format.setnewdateF(safe_Format.checkDate(end_date));
-    const apiUrl = databaseReducer.Data.urlser + '/Executive';
-    const requestBody = {
-      'BPAPUS-BPAPSV': loginReducer.serviceID,
-      'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
-      'BPAPUS-FUNCTION': 'SHOWICDEPTSALESBYARKEY',
-      'BPAPUS-PARAM': '{"FROM_DATE": "' + sDate + '","TO_DATE": "' + eDate + '","AR_KEY": ' + route.params.Obj + '}',
-      'BPAPUS-FILTER': '',
-      'BPAPUS-ORDERBY': '',
-      'BPAPUS-OFFSET': '0',
-      'BPAPUS-FETCH': '0'
-    };
-    console.log('[AR_SellAmountByIcDept] API URL', apiUrl);
-    console.log('[AR_SellAmountByIcDept] request body', requestBody);
-    await fetch(apiUrl, {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    }).then(response => response.json()).then(json => {
-      let responseData = JSON.parse(json.ResponseData);
-      console.log('[AR_SellAmountByIcDept] response', {
-        arKey: route.params?.Obj,
-        recordCount: responseData.RECORD_COUNT,
-        rows: responseData.SHOWICDEPTSALESBYARKEY,
+  const fetchInCome = async (tempGuid, fromDateArg, toDateArg) => {
+    const fromDate = safe_Format.checkDate(fromDateArg ?? start_date);
+    const toDate = safe_Format.checkDate(toDateArg ?? end_date);
+    const loginGuid = tempGuid ? tempGuid : loginReducer.guid;
+    const arKey = String(route.params?.Obj ?? '').trim();
+    var sDate = safe_Format.setnewdateF(fromDate);
+    var eDate = safe_Format.setnewdateF(toDate);
+    const apiUrl = databaseReducer.Data.urlser + '/LookupErp';
+    const primaryBody = buildOe000304LookupBodyByAr(
+      loginReducer.serviceID,
+      loginGuid,
+      arKey,
+      sDate,
+      eDate,
+      OE000304_PRIMARY_PROPERTIES,
+    );
+    console.log('[AR_SellAmountByIcDept] selected AR', {
+      arKey,
+      arCode: route.params?.arCode,
+      arName: route.params?.arName,
+    });
+    console.log('[AR_SellAmountByIcDept] Oe000304 API URL', apiUrl);
+    console.log('[AR_SellAmountByIcDept] Oe000304 request body primary', primaryBody);
+    try {
+      const result = await fetchArSalesByGoods({
+        urlser: databaseReducer.Data.urlser,
+        serviceID: loginReducer.serviceID,
+        loginGuid,
+        arKey,
+        fromDate: sDate,
+        toDate: eDate,
       });
-      if (responseData.RECORD_COUNT > 0) {
-        for (var i in responseData.SHOWICDEPTSALESBYARKEY) {
-          let jsonObj = {
-            id: i,
-            code: responseData.SHOWICDEPTSALESBYARKEY[i].ICDEPT_CODE,
-            icdept_thaidesc: responseData.SHOWICDEPTSALESBYARKEY[i].ICDEPT_THAIDESC,
-            sellAmount: responseData.SHOWICDEPTSALESBYARKEY[i].SHOWSELLAMOUNT
-          };
-          arrayResult.push(jsonObj);
-        }
-      } else {
+      console.log('[AR_SellAmountByIcDept] grouped goods response', {
+        arKey: result.arKey,
+        diKeyCount: result.diKeyCount,
+        lineCount: result.lineCount,
+        hasOe304Data: result.hasOe304Data,
+        rows: result.rows,
+      });
+      if (!result.hasOe304Data || result.rows.length === 0) {
         safe_Format.alertNoData();
+        return [];
       }
-      setLoading(false);
-    }).catch(error => {
+      const mappedRows = result.rows.map((row, index) => ({
+        id: index,
+        code: row.icdeptCode,
+        name: row.icdeptThaiDesc,
+        sellAmount: row.sellAmount,
+      }));
+      const tableTotal = mappedRows.reduce(
+        (total, row) => total + Number(row.sellAmount ?? 0),
+        0,
+      );
+      const top5 = [...mappedRows]
+        .sort((a, b) => Number(b.sellAmount) - Number(a.sellAmount))
+        .slice(0, 5);
+      console.log('[AR_SellAmountByIcDept] table summary', {
+        rowCount: mappedRows.length,
+        tableTotal,
+        top5,
+        nameSample: mappedRows.slice(0, 5).map(row => ({
+          code: row.code,
+          name: row.name,
+        })),
+      });
+      return mappedRows;
+    } catch (error) {
       if (ser_die) {
         ser_die = false;
-        regisMacAdd();
-      } else {
-        let temp_error = 'error_ser.' + 610;
-        Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
-          text: Language.t('alert.ok'),
-          onPress: () => navigation.dispatch(navigation.replace('LoginScreen'))
-        }]);
-        setLoading(false);
+        return regisMacAdd();
       }
+      let temp_error = 'error_ser.' + 610;
+      Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
+        text: Language.t('alert.ok'),
+        onPress: () => navigation.dispatch(navigation.replace('LoginScreen'))
+      }]);
       console.error('ERROR at fetchContent >> ' + error);
-    });
+      return [];
+    }
   };
   const setRadio_menu1 = (index, val) => {
     const Radio_Obj = safe_Format.Radio_menu(index, val);
@@ -264,7 +307,7 @@ const AR_SellAmountByIcDept = ({
                                 fontSize: FontSize.medium,
                                 color: Colors.fontColor,
                                 alignSelf: 'flex-start'
-                              }}>{item.icdept_thaidesc}</Text></View>
+                              }}>{item.name}</Text></View>
                                                                 <View width={deviceWidth * 0.4} style={tableStyles.tableCellTitle}><Text style={{
                                 fontSize: FontSize.medium,
                                 color: Colors.fontColor,

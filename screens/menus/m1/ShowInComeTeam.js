@@ -16,6 +16,7 @@ import * as databaseActions from '../../../src/actions/databaseActions';
 import Colors from '../../../src/Colors';
 import * as safe_Format from '../../../src/safe_Format';
 import { useFetchOe000304ByTeams } from '../../../src/api/useTanstack';
+import { fetchShowIncomeBySlTeam } from '../../../src/api/until';
 const deviceWidth = Dimensions.get('window').width;
 const deviceHeight = Dimensions.get('window').height;
 import tableStyles from '../tableStyles';
@@ -23,7 +24,6 @@ const ShowInComeTeam = ({
   route
 }) => {
   const dispatch = useDispatch();
-  let arrayResult = [];
   const navigation = useNavigation();
   const {
     container2,
@@ -94,83 +94,93 @@ const ShowInComeTeam = ({
   const regisMacAdd = async () => {
     let tempGuid = await safe_Format._fetchGuidLog(databaseReducer.Data.urlser, loginReducer.serviceID, registerReducer.machineNum, loginReducer.userNameED, loginReducer.passwordED);
     await dispatch(loginActions.guid(tempGuid));
-    fetchInCome(tempGuid);
+    const rows = await fetchInCome(tempGuid);
+    setArrayObj(rows);
+    setLoading(false);
   };
   const InCome = async () => {
+    const fromDate = safe_Format.checkDate(start_date);
+    const toDate = safe_Format.checkDate(end_date);
+    if (fromDate.getTime() > toDate.getTime()) {
+      Alert.alert(
+        Language.t('alert.errorTitle'),
+        Language.t('report.dateRangeInvalid'),
+        [{ text: Language.t('alert.ok') }],
+      );
+      return;
+    }
+    setS_date(fromDate);
+    setE_date(toDate);
     setLoading(true);
-    await fetchInCome();
-    setModalVisible(!modalVisible);
-    setArrayObj(arrayResult);
+    setModalVisible(false);
+    const rows = await fetchInCome(undefined, fromDate, toDate);
+    setArrayObj(rows);
+    setLoading(false);
   };
-  const fetchInCome = async tempGuid => {
-    setModalVisible(!modalVisible);
-    var sDate = safe_Format.setnewdateF(safe_Format.checkDate(start_date));
-    var eDate = safe_Format.setnewdateF(safe_Format.checkDate(end_date));
-    const apiUrl = databaseReducer.Data.urlser + '/Executive';
-    const requestBody = {
-      'BPAPUS-BPAPSV': loginReducer.serviceID,
-      'BPAPUS-LOGIN-GUID': tempGuid ? tempGuid : loginReducer.guid,
-      'BPAPUS-FUNCTION': 'SHOWINCOMEBYSLTEAM',
-      'BPAPUS-PARAM': '{"FROM_DATE": "' + sDate + '","TO_DATE": ' + eDate + '}',
-      'BPAPUS-FILTER': '',
-      'BPAPUS-ORDERBY': '',
-      'BPAPUS-OFFSET': '0',
-      'BPAPUS-FETCH': '0'
-    };
-    await fetch(apiUrl, {
-      method: 'POST',
-      body: JSON.stringify(requestBody)
-    }).then(response => response.json()).then(async json => {
-      let responseData = JSON.parse(json.ResponseData);
-      if (responseData.RECORD_COUNT > 0) {
-        const teams = responseData.SHOWINCOMEBYSLTEAM.map(row => ({
-          sltCode: String(row.SLT_CODE ?? '').trim(),
-          sltName: row.SLT_NAME
-        }));
-        let oe304Results = [];
-        try {
-          oe304Results = await fetchTeamsInvoices({
-            urlser: databaseReducer.Data.urlser,
-            serviceID: loginReducer.serviceID,
-            loginGuid: tempGuid ? tempGuid : loginReducer.guid,
-            fromDate: sDate,
-            toDate: eDate,
-            teams
-          });
-        } catch (oe304Error) {
-          console.error('[ShowInComeTeam] Oe000304 loop error', oe304Error);
-        }
-        for (var i in oe304Results) {
-          const result = oe304Results[i];
-          let jsonObj = {
-            id: i,
-            code: result.team.sltCode,
-            name: result.team.sltName,
-            sums: result.netAmount
-          };
-          arrayResult.push(jsonObj);
-        }
-        if (oe304Results.length === 0) {
-          safe_Format.alertNoData();
-        }
-      } else {
+  const fetchInCome = async (tempGuid, fromDateArg, toDateArg) => {
+    const fromDate = safe_Format.checkDate(fromDateArg ?? start_date);
+    const toDate = safe_Format.checkDate(toDateArg ?? end_date);
+    const loginGuid = tempGuid ? tempGuid : loginReducer.guid;
+    var sDate = safe_Format.setnewdateF(fromDate);
+    var eDate = safe_Format.setnewdateF(toDate);
+    try {
+      const responseData = await fetchShowIncomeBySlTeam({
+        urlser: databaseReducer.Data.urlser,
+        serviceID: loginReducer.serviceID,
+        loginGuid,
+        fromDate: sDate,
+        toDate: eDate,
+      });
+      console.log('[ShowInComeTeam] SHOWINCOMEBYSLTEAM teams count', responseData.RECORD_COUNT);
+      if (Number(responseData.RECORD_COUNT) <= 0 || !responseData.SHOWINCOMEBYSLTEAM) {
         safe_Format.alertNoData();
+        return [];
       }
-      setLoading(false);
-    }).catch(error => {
+      const teams = responseData.SHOWINCOMEBYSLTEAM.map(row => ({
+        sltCode: String(row.SLT_CODE ?? '').trim(),
+        sltName: row.SLT_NAME,
+      }));
+      let oe304Results = [];
+      try {
+        oe304Results = await fetchTeamsInvoices({
+          urlser: databaseReducer.Data.urlser,
+          serviceID: loginReducer.serviceID,
+          loginGuid,
+          fromDate: sDate,
+          toDate: eDate,
+          teams,
+        });
+      } catch (oe304Error) {
+        console.error('[ShowInComeTeam] Oe000304 loop error', oe304Error);
+      }
+      const netByCode = Object.fromEntries(
+        oe304Results.map(result => [result.team.sltCode, result.netAmount]),
+      );
+      const rows = teams.map((team, index) => ({
+        id: index,
+        code: team.sltCode,
+        name: team.sltName,
+        sums: netByCode[team.sltCode] ?? 0,
+      }));
+      if (rows.every(row => row.sums === 0)) {
+        safe_Format.alertNoData();
+        return [];
+      }
+      console.log('[ShowInComeTeam] Oe000304 results', oe304Results);
+      return rows;
+    } catch (error) {
       if (ser_die) {
         ser_die = false;
-        regisMacAdd();
-      } else {
-        let temp_error = 'error_ser.' + 610;
-        Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
-          text: Language.t('alert.ok'),
-          onPress: () => navigation.dispatch(navigation.replace('LoginScreen'))
-        }]);
-        setLoading(false);
+        return regisMacAdd();
       }
+      let temp_error = 'error_ser.' + 610;
+      Alert.alert(Language.t('alert.errorTitle'), Language.t(temp_error), [{
+        text: Language.t('alert.ok'),
+        onPress: () => navigation.dispatch(navigation.replace('LoginScreen'))
+      }]);
       console.error('ERROR at fetchContent >> ' + error);
-    });
+      return [];
+    }
   };
   const setRadio_menu1 = (index, val) => {
     const Radio_Obj = safe_Format.Radio_menu(index, val);
