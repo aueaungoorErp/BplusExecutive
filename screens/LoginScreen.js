@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Dimensions, Text, View, Image, ImageBackground, TextInput, KeyboardAvoidingView, ActivityIndicator, Alert, Platform, BackHandler, StatusBar, TouchableNativeFeedback, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, Dimensions, Text, View, Image, ImageBackground, TextInput, Keyboard, KeyboardAvoidingView, ActivityIndicator, Alert, Platform, BackHandler, StatusBar, TouchableNativeFeedback, TouchableOpacity, TouchableWithoutFeedback, Pressable } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
 import DeviceInfo from 'react-native-device-info';
 import { NetworkInfo } from 'react-native-network-info';
@@ -56,6 +56,7 @@ const LoginScreen = () => {
   const [data, setData] = useStateIfMounted({
     secureTextEntry: true
   });
+  const passwordRef = useRef(null);
   const image = '../images/UI/Login/Asset4.png';
   useEffect(() => {
     const serviceID = '{167f0c96-86fd-488f-94d1-cc3169d60b1a}';
@@ -223,7 +224,8 @@ const LoginScreen = () => {
         await tslogin();
       }
     }} resizeMode="cover" style={styles.image}>
-        {!loading_backG ? <View style={styles.screenContent}>
+        {!loading_backG ? <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={styles.screenContent}>
             <View style={tabbar}>
               <TouchableOpacity onPress={() => navigation.navigate('SelectScreen', {
             data: ''
@@ -241,7 +243,7 @@ const LoginScreen = () => {
                 {databaseReducer.Data.nameser ? databaseReducer.Data.nameser : 'ไม่มีการเชื่อมต่อกิจการ'}
               </Text>
             </View>
-            <View style={styles.formSpacer} />
+            <Pressable style={styles.formSpacer} onPress={Keyboard.dismiss} />
             {loginReducer.guid.length == 0 && <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}>
                 <View style={styles.formContainer}>
                   <View>
@@ -279,7 +281,7 @@ const LoginScreen = () => {
                     paddingVertical: 7,
                     fontSize: FontSize.medium,
                     borderBottomWidth: 0.7
-                  }} placeholderTextColor={Colors.fontColorSecondary} autoCapitalize="characters" value={username} maxLength={10} placeholder={Language.t('login.username')} onChangeText={val => setUsername(val.toUpperCase())}></TextInput>
+                  }} placeholderTextColor={Colors.fontColorSecondary} autoCapitalize="characters" value={username} maxLength={10} placeholder={Language.t('login.username')} returnKeyType="next" blurOnSubmit={false} onSubmitEditing={() => passwordRef.current?.focus()} onChangeText={val => setUsername(val.toUpperCase())}></TextInput>
                       </View>
                     </View>
                   </View>
@@ -314,7 +316,7 @@ const LoginScreen = () => {
                     width: 30
                   }} resizeMode={'contain'} source={require('../images/UI/Login/Asset3.png')} />
 
-                        <TextInput style={{
+                        <TextInput ref={passwordRef} style={{
                     flex: 8,
                     marginLeft: 10,
                     color: Colors.fontColor,
@@ -322,7 +324,7 @@ const LoginScreen = () => {
                     fontSize: FontSize.medium,
                     borderBottomColor: Colors.buttonColorPrimary,
                     borderBottomWidth: 0.7
-                  }} secureTextEntry={data.secureTextEntry ? true : false} keyboardType="default" maxLength={8} value={password} placeholderTextColor={Colors.fontColorSecondary} placeholder={Language.t('login.password')} onChangeText={val => {
+                  }} secureTextEntry={data.secureTextEntry ? true : false} keyboardType="default" maxLength={8} value={password} placeholderTextColor={Colors.fontColorSecondary} placeholder={Language.t('login.password')} returnKeyType="done" onSubmitEditing={Keyboard.dismiss} onChangeText={val => {
                     setPassword(val);
                   }} />
                         <TouchableOpacity style={styles.eyeIconButton} onPress={updateSecureTextEntry}>
@@ -373,7 +375,8 @@ const LoginScreen = () => {
                   </View>
                 </View>
               </KeyboardAvoidingView>}
-          </View> : <View style={{
+          </View>
+          </TouchableWithoutFeedback> : <View style={{
         width: deviceWidth,
         height: deviceHeight,
         opacity: 0.5,
