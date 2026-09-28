@@ -24,7 +24,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     window = UIWindow(frame: UIScreen.main.bounds)
 
     factory.startReactNative(
-      withModuleName: "BplusExecutive",
+      withModuleName: "com.bplus.executive",
       in: window,
       launchOptions: launchOptions
     )

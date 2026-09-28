@@ -78,6 +78,7 @@ const isAccessibleQrSource = value => {
   if (
     value.includes('rn_image_picker_lib_temp') ||
     value.includes('/cache/') ||
+    value.includes('/com.bplus.executive/') ||
     value.includes('/com.bplusexecutive/')
   ) {
     return true;

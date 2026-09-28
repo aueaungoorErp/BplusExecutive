@@ -1,4 +1,4 @@
-package com.bplusexecutive
+package com.bplus.executive
 
 import android.app.Application
 import com.facebook.react.PackageList
