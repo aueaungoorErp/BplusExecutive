@@ -33,5 +33,15 @@ target 'combplusexecutive' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    minimum_ios = '15.1'
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |build_config|
+        current = build_config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+        if current.nil? || Gem::Version.new(current) < Gem::Version.new(minimum_ios)
+          build_config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = minimum_ios
+        end
+      end
+    end
   end
 end

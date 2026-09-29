@@ -13,7 +13,10 @@
     "errorIncorrentUsernameOrPassword": "เบอร์โทรศัพท์ผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
     "errorNotfoundUsername": "ไม่พบข้อมูลสมาชิก",
     "rememberpassword": "จดจำรหัสผ่าน",
-    "usestandard": "ใช้คุณสมบัติสินค้าตามมาตรฐาน"
+    "usestandard": "ใช้คุณสมบัติสินค้าตามมาตรฐาน",
+    "databaseNotConfiguredTitle": "ยังไม่ได้ตั้งค่าฐานข้อมูล",
+    "databaseNotConfigured": "กรุณาตั้งค่าฐานข้อมูลก่อน",
+    "databaseSetupAction": "ไปตั้งค่าฐานข้อมูล"
   },
   "register": {
     "header": "สมัครสมาชิก",

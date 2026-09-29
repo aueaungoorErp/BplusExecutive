@@ -13,7 +13,10 @@
     "errorIncorrentUsernameOrPassword": "Mobile number or password is incorrect",
     "errorNotfoundUsername": "Mobile number not found",
     "rememberpassword": "Remember password",
-    "usestandard": "Use standard product features"
+    "usestandard": "Use standard product features",
+    "databaseNotConfiguredTitle": "Database not configured",
+    "databaseNotConfigured": "Please configure the database first",
+    "databaseSetupAction": "Set up database"
   },
   "register": {
     "header": "Register",

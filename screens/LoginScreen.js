@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Dimensions, Text, View, Image, ImageBackground, TextInput, Keyboard, KeyboardAvoidingView, ActivityIndicator, Alert, Platform, BackHandler, StatusBar, TouchableNativeFeedback, TouchableOpacity, TouchableWithoutFeedback, Pressable } from 'react-native';
+import { StyleSheet, Dimensions, Text, View, Image, ImageBackground, TextInput, Keyboard, KeyboardAvoidingView, ActivityIndicator, Alert, Platform, BackHandler, StatusBar, TouchableNativeFeedback, TouchableOpacity, TouchableWithoutFeedback, Pressable, Modal } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
 import DeviceInfo from 'react-native-device-info';
 import { NetworkInfo } from 'react-native-network-info';
@@ -56,7 +56,21 @@ const LoginScreen = () => {
   const [data, setData] = useStateIfMounted({
     secureTextEntry: true
   });
+  const [databaseSetupModalVisible, setDatabaseSetupModalVisible] = useState(false);
   const passwordRef = useRef(null);
+  const isDatabaseConfigured = () => {
+    const urlser = databaseReducer?.Data?.urlser;
+    return typeof urlser === 'string' && urlser.trim().length > 0;
+  };
+  const promptDatabaseSetup = () => {
+    setDatabaseSetupModalVisible(true);
+  };
+  const openDatabaseSetupScreen = () => {
+    setDatabaseSetupModalVisible(false);
+    navigation.navigate('SelectScreen', {
+      data: ''
+    });
+  };
   const image = '../images/UI/Login/Asset4.png';
   useEffect(() => {
     const serviceID = '{167f0c96-86fd-488f-94d1-cc3169d60b1a}';
@@ -64,13 +78,10 @@ const LoginScreen = () => {
     if (registerReducer.machineNum.length == 0 || registerReducer.machineNum == '02:00:00:00:00:00') getMac();
   }, []);
   useEffect(() => {
-    if (!databaseReducer.Data.urlser && !loading_backG) Alert.alert(Language.t('notiAlert.header'), Language.t('notiAlert.connectBusiness'), [{
-      text: Language.t('alert.ok'),
-      onPress: () => navigation.navigate('SelectScreen', {
-        data: ''
-      })
-    }]);
-  }, [loading_backG]);
+    if (!loading_backG && !isDatabaseConfigured()) {
+      promptDatabaseSetup();
+    }
+  }, [loading_backG, databaseReducer.Data.urlser]);
   useEffect(() => {
     dispatch(loginActions.setFingerprint(isSFeatures));
   }, [isSFeatures]);
@@ -109,6 +120,10 @@ const LoginScreen = () => {
     }).catch(e => dispatch(registerActions.machine(uuid)));
   };
   const tslogin = async () => {
+    if (!isDatabaseConfigured()) {
+      promptDatabaseSetup();
+      return;
+    }
     await setLoading(true);
     await UnRegister();
     await regisMacAdd();
@@ -404,6 +419,31 @@ const LoginScreen = () => {
           alignSelf: 'center'
         }} animating={loading} size="large" color={Colors.lightPrimiryColor} />
           </View>}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={databaseSetupModalVisible}
+          onRequestClose={() => {}}>
+          <View style={styles.databaseModalBackdrop}>
+            <View style={styles.databaseModalCard}>
+              <Text style={styles.databaseModalTitle}>
+                {Language.t('notiAlert.header')}
+              </Text>
+              <Text style={styles.databaseModalMessage}>
+                {Language.t('notiAlert.connectBusiness')}
+              </Text>
+              <View style={styles.databaseModalDivider} />
+              <TouchableOpacity
+                activeOpacity={0.6}
+                style={styles.databaseModalOkButton}
+                onPress={openDatabaseSetupScreen}>
+                <Text style={styles.databaseModalOkText}>
+                  {Language.t('alert.ok')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </ImageBackground>
     </SafeAreaView>;
 };
@@ -497,6 +537,58 @@ const styles = StyleSheet.create({
   label: {
     margin: 8,
     color: Colors.fontColor
-  }
+  },
+  databaseModalBackdrop: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    backgroundColor: 'rgba(0,0,0,0.4)'
+  },
+  databaseModalCard: {
+    width: '100%',
+    maxWidth: 300,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingTop: 20,
+    paddingHorizontal: 16,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4
+  },
+  databaseModalTitle: {
+    fontSize: FontSize.medium,
+    fontWeight: '600',
+    color: '#000000',
+    textAlign: 'center',
+    marginBottom: 8
+  },
+  databaseModalMessage: {
+    fontSize: FontSize.medium,
+    lineHeight: 22,
+    color: '#3C3C43',
+    textAlign: 'center',
+    marginBottom: 16
+  },
+  databaseModalDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#C6C6C8',
+    marginHorizontal: -16
+  },
+  databaseModalOkButton: {
+    paddingVertical: 12,
+    alignItems: 'center'
+  },
+  databaseModalOkText: {
+    color: Colors.linkColor,
+    fontSize: FontSize.medium,
+    fontWeight: '600'
+  },
 });
 export default LoginScreen;
